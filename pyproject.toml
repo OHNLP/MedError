@@ -7,7 +7,8 @@ name = "mederror"
 version = "0.0.1"
 description = "A project for medical error detection and analysis"
 authors = [
-  { name = "Your name (or your organization/company/team)" },
+  { name = "Jaerong Ahn", email = "jaerong.ahn@uth.tmc.edu" },
+  { name = "Sunyang Fu", email = "sunyang.fu@uth.tmc.edu" },
 ]
 license = { file = "LICENSE" }
 readme = "README.md"

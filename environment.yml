@@ -1,0 +1,17 @@
+# conda env create -f environment.yml
+
+name: *********  # set the name here
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - pip
+  - python>=3.12
+  - pandas
+  - matplotlib
+  - numpy
+  - ipykernel
+  - pip:
+    - python-dotenv
+    - pyodbc
+    - -e .

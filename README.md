@@ -2,6 +2,17 @@
 
 A project for medical error detection and analysis
 
+## 🌐 Try the App
+
+https://ohnlp.org/MedError/
+
+## 📊 Sample Data
+
+Sample data files are available in the `assets/` folder:
+
+- `error_definition.yaml` - Error category definitions
+- `error_labels.json` - Annotated medical text examples
+
 ---
 
 ### Create a virtual environment with:

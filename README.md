@@ -32,7 +32,7 @@ Sample data files are available in the `assets/` folder:
 ### Step 1: Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/OHNLP/MedError.git
 cd MedError
 ```
 

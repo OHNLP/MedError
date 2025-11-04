@@ -9,6 +9,8 @@ description = "A project for medical error detection and analysis"
 authors = [
   { name = "Jaerong Ahn", email = "jaerong.ahn@uth.tmc.edu" },
   { name = "Sunyang Fu", email = "sunyang.fu@uth.tmc.edu" },
+  { name = "Qiuhao Lu", email = "qiuhao.lu@uth.tmc.edu" },
+  { name = "Fang Chen", email = "fang.chen@uth.tmc.edu" },
 ]
 license = { file = "LICENSE" }
 readme = "README.md"

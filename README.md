@@ -6,6 +6,18 @@ A project for medical error detection and analysis
 
 https://ohnlp.org/MedError/
 
+---
+
+## System Requirements
+
+### Operating Systems
+
+This software has been tested on:
+
+- **macOS** (Darwin 24.2.0 and later)
+- **Linux** (Ubuntu 20.04, 22.04)
+- **Windows** (Windows 10/11 with WSL2 recommended)
+
 ## 📊 Sample Data
 
 Sample data files are available in the `assets/` folder:
@@ -15,9 +27,37 @@ Sample data files are available in the `assets/` folder:
 
 ---
 
-### Create a virtual environment with:
+## Installation Guide
 
-`conda env create -f environment.yml`
+### Step 1: Clone the Repository
+
+```bash
+git clone <repository-url>
+cd MedError
+```
+
+### Step 2: Create a Virtual Environment
+
+```bash
+conda env create -f environment.yml
+conda activate mederror
+```
+
+### Step 3: Install Dependencies
+
+```bash
+pip install -e .
+```
+
+For development dependencies:
+
+```bash
+pip install -e .[dev]
+```
+
+### Typical Install Time
+
+- **With Conda**: ~5 minutes
 
 ---
 

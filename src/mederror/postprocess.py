@@ -1,14 +1,31 @@
+"""Module for parsing and postprocessing LLM output files."""
+
 import csv
 import re
+from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 
 
-def parse_result_file(file_path):
+def parse_result_file(file_path: str) -> Optional[pd.DataFrame]:
+    """
+    Parse result file with markdown table format.
+
+    Args:
+        file_path: Path to the result file
+
+    Returns:
+        DataFrame with columns: Sentence, NLP Prediction, Error Class, Reasoning
+        Returns None if no tables found
+    """
+    if not Path(file_path).exists():
+        raise FileNotFoundError(f"File not found: {file_path}")
+
     # List to hold all data rows from each query's table
     all_rows = []
 
-    with open(file_path, "r") as file:
+    with open(file_path, "r", encoding="utf-8") as file:
         content = file.read()
 
     # Split the file by queries using regex to identify each query's starting line
@@ -66,7 +83,7 @@ def parse_result_file(file_path):
         return None
 
 
-def parse_result_file_tab(file_path):
+def parse_result_file_tab(file_path: str) -> Optional[pd.DataFrame]:
     # List to hold parsed data rows from each query
     all_rows = []
 
@@ -135,16 +152,35 @@ def parse_result_file_tab(file_path):
         return None
 
 
-def parse_result_file_new(file_path, original_input):
+def parse_result_file_new(
+    file_path: str, original_input: str
+) -> Optional[pd.DataFrame]:
+    """
+    Parse result file with new format and merge with original input data.
+
+    Args:
+        file_path: Path to the result file
+        original_input: Path to original input CSV file
+
+    Returns:
+        DataFrame with columns: Sentence, NLP Prediction, Error Class, Reasoning,
+        ID, sent, Concept Norm, error_type
+        Returns None if no valid final answers found
+    """
+    if not Path(file_path).exists():
+        raise FileNotFoundError(f"Result file not found: {file_path}")
+    if not Path(original_input).exists():
+        raise FileNotFoundError(f"Original input file not found: {original_input}")
+
     # List to hold parsed data rows from each query
     all_rows = []
 
-    with open(file_path, "r") as file:
+    with open(file_path, "r", encoding="utf-8") as file:
         content = file.read()
 
     with open(original_input, mode="r", encoding="utf-8-sig") as csv_file:
         csv_reader = csv.reader(csv_file)
-        header = next(csv_reader, None)
+        next(csv_reader, None)  # Skip header
         csv_rows = list(csv_reader)
 
     # Split by queries using regex to identify each section starting with "######"
@@ -158,11 +194,7 @@ def parse_result_file_new(file_path, original_input):
         )
 
         # First, try to find "**Final Answer**:" block
-        final_answer_match = re.search(
-            r"\*\*Final Answer\*\*:\s*\nError class:\s*(.*)\nReasoning:\s*(.+)",
-            query_content,
-            re.DOTALL | re.IGNORECASE,
-        )
+        # (Pattern matching is done below in the if statement)
 
         if (
             "error class" in query_content.lower()
@@ -170,15 +202,29 @@ def parse_result_file_new(file_path, original_input):
         ):
             # print(query_content)
             query_content = query_content.replace("*", "")
-            error_class_start = re.search(
+            error_class_match = re.search(
                 r"error class:\s*", query_content, re.IGNORECASE
-            ).end()
-            reasoning_start = re.search(
+            )
+            reasoning_match = re.search(
                 r"\s*reasoning:\s*", query_content, re.IGNORECASE
-            ).start()
-            reasoning_end = re.search(
-                r"\s*reasoning:\s*", query_content, re.IGNORECASE
-            ).end()
+            )
+
+            if not error_class_match or not reasoning_match:
+                # Handle missing "Final Answer" section gracefully
+                row_ori = "".join(csv_rows[idx]).split("\t")
+                row_data = [
+                    "CHATGPT_FAILURE",
+                    "CHATGPT_FAILURE",
+                    "CHATGPT_FAILURE",
+                    "CHATGPT_FAILURE",
+                ] + row_ori
+                all_rows.append(row_data)
+                idx += 1
+                continue
+
+            error_class_start = error_class_match.end()
+            reasoning_start = reasoning_match.start()
+            reasoning_end = reasoning_match.end()
 
             # Extract the "Error class" text up to "Reasoning" and "Reasoning" text up to the end
             error_class = query_content[error_class_start:reasoning_start].strip()
@@ -225,9 +271,11 @@ def parse_result_file_new(file_path, original_input):
         return None
 
 
-original_input = "error_input_v3.csv"
-file_path = "output3/o1"
+if __name__ == "__main__":
+    # Example usage
+    original_input = "error_input_v3.csv"
+    file_path = "output3/o1"
 
-df = parse_result_file_new(file_path, original_input)
-print(df)
-df.to_csv(file_path + "_clean.csv", index=True)
+    df = parse_result_file_new(file_path, original_input)
+    print(df)
+    df.to_csv(file_path + "_clean.csv", index=True)

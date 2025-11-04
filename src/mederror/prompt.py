@@ -1,116 +1,219 @@
+"""Module for prompting LLM models for medical error classification."""
+
 import csv
 import os
-import random
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+from typing import Optional
 
-import pandas as pd
 from openai import AzureOpenAI
 from tqdm import tqdm
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
 
 
-def prompt_llama(file_path, model_name, inst_text, output_file):
+def prompt_llama(
+    file_path: str,
+    model_name: str,
+    inst_text: str,
+    output_file: str,
+    tensor_parallel_size: int = 8,
+    max_num_batched_tokens: int = 512,
+    gpu_memory_utilization: float = 0.95,
+    temperature: float = 0.0,
+    top_p: float = 0.9,
+    max_tokens: int = 1024,
+) -> None:
+    """
+    Process medical error classification using a local Llama model.
+
+    Args:
+        file_path: Path to input CSV file with columns: ID, Sentence, NLP Prediction, Error Type
+        model_name: HuggingFace model identifier
+        inst_text: Instruction prompt text
+        output_file: Path to output file
+        tensor_parallel_size: Number of tensor parallel workers
+        max_num_batched_tokens: Maximum number of batched tokens
+        gpu_memory_utilization: GPU memory utilization ratio
+        temperature: Sampling temperature
+        top_p: Top-p sampling parameter
+        max_tokens: Maximum tokens to generate
+    """
 
     # Initialize the model and tokenizer
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     llm = LLM(
         model=model_name,
-        tensor_parallel_size=8,
-        max_num_batched_tokens=512,
-        gpu_memory_utilization=0.95,
+        tensor_parallel_size=tensor_parallel_size,
+        max_num_batched_tokens=max_num_batched_tokens,
+        gpu_memory_utilization=gpu_memory_utilization,
     )
-    sampling_params = SamplingParams(temperature=0.0, top_p=0.9, max_tokens=1024)
+    sampling_params = SamplingParams(
+        temperature=temperature, top_p=top_p, max_tokens=max_tokens
+    )
+
+    # Ensure output directory exists
+    Path(output_file).parent.mkdir(parents=True, exist_ok=True)
 
     # Open the output file in write mode
-    with open(output_file, "w") as output_f:
-        # Write the header for the output file
-        # output_f.write("Original Sentence\tNLP Output\tError Class\tReasoning\n")
-
+    with open(output_file, "w", encoding="utf-8") as output_f:
         # Read input from the CSV file
-        with open(file_path, mode="r", encoding="utf-8-sig") as csv_file:
-            csv_reader = csv.reader(csv_file)
+        try:
+            with open(file_path, mode="r", encoding="utf-8-sig") as csv_file:
+                csv_reader = csv.reader(csv_file)
 
-            # Skip the header row if there is one
-            header = next(csv_reader, None)
-            # Process each row
-            for row in tqdm(csv_reader):
-                try:
-                    row = "".join(row).split("\t")
-                    sentence, nlp_prediction, expected_error_type = row[1:4]
-                    user_input = f"Sentence: {sentence}\tNLP Prediction: {nlp_prediction}\tType of Error: {expected_error_type}"
-                    messages = [
-                        {"role": "system", "content": inst_text},
-                        {"role": "user", "content": "\n\n## Input:\n\n" + user_input},
-                    ]
-                    prompts = tokenizer.apply_chat_template(
-                        messages, add_generation_prompt=True, tokenize=False
-                    )
+                # Skip the header row if there is one
+                next(csv_reader, None)
+                # Process each row
+                for row_idx, row in enumerate(tqdm(csv_reader, desc="Processing rows")):
+                    try:
+                        row = "".join(row).split("\t")
+                        if len(row) < 4:
+                            raise ValueError(
+                                f"Row {row_idx + 2} has insufficient columns"
+                            )
+                        sentence, nlp_prediction, expected_error_type = row[1:4]
+                        user_input = (
+                            f"Sentence: {sentence}\tNLP Prediction: {nlp_prediction}\t"
+                            f"Type of Error: {expected_error_type}"
+                        )
+                        messages = [
+                            {"role": "system", "content": inst_text},
+                            {
+                                "role": "user",
+                                "content": "\n\n## Input:\n\n" + user_input,
+                            },
+                        ]
+                        prompts = tokenizer.apply_chat_template(
+                            messages, add_generation_prompt=True, tokenize=False
+                        )
 
-                    result = (
-                        llm.generate(prompts, sampling_params)[0]
-                        .outputs[0]
-                        .text.strip()
-                    )
+                        result = (
+                            llm.generate(prompts, sampling_params)[0]
+                            .outputs[0]
+                            .text.strip()
+                        )
 
-                except Exception as e:
-                    # print(f"Error processing row {row}: {e}")
-                    result = (
-                        f"{sentence}\t{nlp_prediction}\tError\tError: Unable to process"
-                    )
+                    except Exception as e:
+                        sentence = row[1] if len(row) > 1 else "N/A"
+                        nlp_prediction = row[2] if len(row) > 2 else "N/A"
+                        result = (
+                            f"{sentence}\t{nlp_prediction}\tError\t"
+                            f"Error: Unable to process - {str(e)}"
+                        )
 
-                # Write the result to the output file
-                output_f.write("###### " + "\n" + result + "\n")
+                    # Write the result to the output file
+                    output_f.write(f"###### {row_idx + 1}\n{result}\n")
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Input file not found: {file_path}")
+        except Exception as e:
+            raise RuntimeError(f"Error processing file {file_path}: {str(e)}")
 
 
-def prompt_openai(file_path, deployment_name, inst_text, output_file):
+def prompt_openai(
+    file_path: str,
+    deployment_name: str,
+    inst_text: str,
+    output_file: str,
+    client: Optional[AzureOpenAI] = None,
+    api_key: Optional[str] = None,
+    api_version: str = "2024-12-01-preview",
+    azure_endpoint: Optional[str] = None,
+) -> None:
+    """
+    Process medical error classification using Azure OpenAI.
+
+    Args:
+        file_path: Path to input CSV file with columns: ID, Sentence, NLP Prediction, Error Type
+        deployment_name: Azure OpenAI deployment name
+        inst_text: Instruction prompt text
+        output_file: Path to output file
+        client: Optional AzureOpenAI client instance (if None, will create from env vars)
+        api_key: Optional API key (if None, uses AZURE_OPENAI_KEY env var)
+        api_version: Azure OpenAI API version
+        azure_endpoint: Optional endpoint (if None, uses AZURE_OPENAI_ENDPOINT env var)
+    """
+    # Initialize client if not provided
+    if client is None:
+        api_key = api_key or os.getenv("AZURE_OPENAI_KEY")
+        azure_endpoint = azure_endpoint or os.getenv("AZURE_OPENAI_ENDPOINT")
+
+        if not api_key or not azure_endpoint:
+            raise ValueError(
+                "Azure OpenAI credentials not provided. Set AZURE_OPENAI_KEY and "
+                "AZURE_OPENAI_ENDPOINT environment variables or pass them as arguments."
+            )
+
+        client = AzureOpenAI(
+            api_key=api_key,
+            api_version=api_version,
+            azure_endpoint=azure_endpoint,
+        )
+
+    # Ensure output directory exists
+    Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+
     # Open the output file in write mode
-    with open(output_file, "w") as output_f:
-        # Read input from the CSV file
-        with open(file_path, mode="r", encoding="utf-8-sig") as csv_file:
-            csv_reader = csv.reader(csv_file)
-            # Skip the header row if there is one
-            header = next(csv_reader, None)
-            # Process each row
-            for row in tqdm(csv_reader):
-                try:
-                    row = "".join(row).split("\t")
-                    sentence, nlp_prediction, expected_error_type = row[1:4]
-                    user_input = f"Sentence: {sentence}\tNLP Prediction: {nlp_prediction}\tType of Error: {expected_error_type}"
-
-                    if "o1" not in deployment_name:
-                        response = client.chat.completions.create(
-                            model=deployment_name,
-                            messages=[
-                                {"role": "system", "content": inst_text},
-                                {
-                                    "role": "user",
-                                    "content": "\n\n## Input:\n\n" + user_input,
-                                },
-                            ],
-                        )
-                    else:
-                        response = client.chat.completions.create(
-                            model=deployment_name,
-                            messages=[
-                                {
-                                    "role": "user",
-                                    "content": inst_text
-                                    + "\n\n## Input:\n\n"
-                                    + user_input,
-                                },
-                            ],
+    with open(output_file, "w", encoding="utf-8") as output_f:
+        try:
+            # Read input from the CSV file
+            with open(file_path, mode="r", encoding="utf-8-sig") as csv_file:
+                csv_reader = csv.reader(csv_file)
+                # Skip the header row if there is one
+                next(csv_reader, None)
+                # Process each row
+                for row_idx, row in enumerate(tqdm(csv_reader, desc="Processing rows")):
+                    try:
+                        row = "".join(row).split("\t")
+                        if len(row) < 4:
+                            raise ValueError(
+                                f"Row {row_idx + 2} has insufficient columns"
+                            )
+                        sentence, nlp_prediction, expected_error_type = row[1:4]
+                        user_input = (
+                            f"Sentence: {sentence}\tNLP Prediction: {nlp_prediction}\t"
+                            f"Type of Error: {expected_error_type}"
                         )
 
-                    result = response.choices[0].message.content.strip()
-                except Exception as e:
-                    print(f"Error processing row {row}: {e}")
-                    result = (
-                        f"{sentence}\t{nlp_prediction}\tError\tError: Unable to process"
-                    )
+                        # O1 model uses different prompt format
+                        if "o1" not in deployment_name.lower():
+                            response = client.chat.completions.create(
+                                model=deployment_name,
+                                messages=[
+                                    {"role": "system", "content": inst_text},
+                                    {
+                                        "role": "user",
+                                        "content": "\n\n## Input:\n\n" + user_input,
+                                    },
+                                ],
+                            )
+                        else:
+                            response = client.chat.completions.create(
+                                model=deployment_name,
+                                messages=[
+                                    {
+                                        "role": "user",
+                                        "content": inst_text
+                                        + "\n\n## Input:\n\n"
+                                        + user_input,
+                                    },
+                                ],
+                            )
 
-                # Write the result to the output file
-                output_f.write("###### " + "\n" + result + "\n")
+                        result = response.choices[0].message.content.strip()
+                    except Exception as e:
+                        sentence = row[1] if len(row) > 1 else "N/A"
+                        nlp_prediction = row[2] if len(row) > 2 else "N/A"
+                        result = (
+                            f"{sentence}\t{nlp_prediction}\tError\t"
+                            f"Error: Unable to process - {str(e)}"
+                        )
+
+                    # Write the result to the output file
+                    output_f.write(f"###### {row_idx + 1}\n{result}\n")
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Input file not found: {file_path}")
+        except Exception as e:
+            raise RuntimeError(f"Error processing file {file_path}: {str(e)}")
 
 
 # Define the system prompt (inst_text) separately as given
@@ -457,37 +560,49 @@ Reasoning:
 """
 
 
-### local llama models
-# model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-# model_id = "meta-llama/Meta-Llama-3.1-70B-Instruct"
-model_id = "meta-llama/Meta-Llama-3.1-405B-Instruct-FP8"
+def get_default_prompt() -> str:
+    """
+    Get the default instruction prompt for medical error classification.
 
-# file_path = 'error_input_v2.csv'
-file_path = "error_input_v3.csv"
-
-# output_path = 'output/' + model_id.split('/')[1].strip()
-output_path = "output3/" + model_id.split("/")[1].strip()
-
-prompt_llama(file_path, model_id, inst_text, output_path)
+    Returns:
+        The default instruction prompt text
+    """
+    return inst_text
 
 
-os.environ["AZURE_OPENAI_KEY"] = ""
-os.environ["AZURE_OPENAI_ENDPOINT"] = ""
+if __name__ == "__main__":
+    # Example usage: OpenAI
+    # Uncomment and configure to use Azure OpenAI
+    """
+    os.environ["AZURE_OPENAI_KEY"] = ""
+    os.environ["AZURE_OPENAI_ENDPOINT"] = ""
 
+    client = AzureOpenAI(
+        api_key=os.getenv("AZURE_OPENAI_KEY"),
+        api_version="2024-12-01-preview",
+        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+    )
 
-client = AzureOpenAI(
-    api_key=os.getenv("AZURE_OPENAI_KEY"),
-    api_version="2024-12-01-preview",
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-)
+    # deployment_name = 'gpt-4o'
+    # deployment_name = 'o3-mini'
+    deployment_name = "o1"
 
-# deployment_name = 'gpt-4o'
-# deployment_name = 'o3-mini'
-deployment_name = "o1"
+    file_path = "error_input_v3.csv"
+    output_path = "output3/" + deployment_name
 
+    prompt_openai(file_path, deployment_name, inst_text, output_path)
+    """
 
-file_path = "error_input_v3.csv"
-output_path = "output3/" + deployment_name
+    # Example usage: Local Llama models
+    # Uncomment and configure to use local Llama models
+    # model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+    # model_id = "meta-llama/Meta-Llama-3.1-70B-Instruct"
+    model_id = "meta-llama/Meta-Llama-3.1-405B-Instruct-FP8"
 
+    # file_path = 'error_input_v2.csv'
+    file_path = "error_input_v3.csv"
 
-prompt_openai(file_path, deployment_name, inst_text, output_path)
+    # output_path = 'output/' + model_id.split('/')[1].strip()
+    output_path = "output3/" + model_id.split("/")[1].strip()
+
+    prompt_llama(file_path, model_id, inst_text, output_path)

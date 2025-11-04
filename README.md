@@ -61,6 +61,27 @@ pip install -e .[dev]
 
 ---
 
+## Demo
+
+** Edit path in the code to run the demo**
+
+1. **Run error classification**:
+
+   ```bash
+   python src/mederror/prompt.py
+   ```
+
+2. **Post-process results**:
+
+   ```bash
+   python src/mederror/postprocess.py
+   ```
+
+3. **Evaluate results**:
+   ```bash
+   python src/mederror/eval.py
+   ```
+
 ## Contribution Guidelines
 
 If you plan to contribute to this repository, follow these steps:

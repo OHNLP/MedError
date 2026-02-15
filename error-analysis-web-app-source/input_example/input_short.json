@@ -1,0 +1,134 @@
+{
+  "tags": [
+    {
+      "uid": 2001,
+      "sentence": "No evidence of delirium during today's examination.",
+      "gold_standard": "A",
+      "LLM_prediction": "FP",
+      "LLM_reasoning": "The sentence explicitly negates delirium using 'No evidence of delirium'. The model incorrectly extracts Delirium without accounting for negation.",
+      "errors": [
+        {
+          "category": "Negation",
+          "type": "Contextual Error"
+        }
+      ]
+    },
+    {
+      "uid": 2002,
+      "sentence": "Patient denies any recent falls or near-falls.",
+      "gold_standard": "A",
+      "LLM_prediction": "FP",
+      "LLM_reasoning": "The phrase 'denies any recent falls' clearly negates the presence of a Fall event. The model incorrectly identifies Fall as present.",
+      "errors": [
+        {
+          "category": "Negation",
+          "type": "Contextual Error"
+        }
+      ]
+    },
+    {
+      "uid": 2003,
+      "sentence": "Screening for food insecurity was negative.",
+      "gold_standard": "A",
+      "LLM_prediction": "FP",
+      "LLM_reasoning": "The sentence documents a negative screening result. The model falsely extracts Food_Insecurity due to failure to interpret screening outcome context.",
+      "errors": [
+        {
+          "category": "Exclusion",
+          "type": "Contextual Error"
+        }
+      ]
+    },
+    {
+      "uid": 2004,
+      "sentence": "Delirium was considered but ultimately ruled out after metabolic panel returned normal.",
+      "gold_standard": "A",
+      "LLM_prediction": "FP",
+      "LLM_reasoning": "The sentence documents a differential diagnosis process and explicitly states delirium was ruled out. The model incorrectly captures Delirium as present.",
+      "errors": [
+        {
+          "category": "Differential Diagnosis",
+          "type": "Contextual Error"
+        }
+      ]
+    },
+    {
+      "uid": 2005,
+      "sentence": "Frequent falls in the past year, now using a walker.",
+      "gold_standard": "P",
+      "LLM_prediction": "FN",
+      "LLM_reasoning": "The sentence clearly indicates Fall history ('Frequent falls in the past year'), but the model fails to extract the concept, resulting in a false negative.",
+      "errors": [
+        {
+          "category": "Missed Detection",
+          "type": "Extraction Error"
+        }
+      ]
+    },
+    {
+      "uid": 2006,
+      "sentence": "Patient reports difficulty affording groceries and sometimes skips meals.",
+      "gold_standard": "P",
+      "LLM_prediction": "FN",
+      "LLM_reasoning": "The sentence implies Food_Insecurity through financial hardship and meal skipping, but the model fails to capture this implied concept.",
+      "errors": [
+        {
+          "category": "Implied Concept",
+          "type": "Contextual Error"
+        }
+      ]
+    },
+    {
+      "uid": 2007,
+      "sentence": "Acute confusion likely secondary to urinary tract infection.",
+      "gold_standard": "P",
+      "LLM_prediction": "FP",
+      "LLM_reasoning": "The model maps 'acute confusion' directly to Delirium without sufficient contextual confirmation. The gold standard annotation may have labeled it as non-delirium confusion, leading to disagreement.",
+      "errors": [
+        {
+          "category": "Annotation Error",
+          "type": "Gold Standard Ambiguity"
+        }
+      ]
+    },
+    {
+      "uid": 2008,
+      "sentence": "History notable for one mechanical fall last winter without injury.",
+      "gold_standard": "A",
+      "LLM_prediction": "P",
+      "LLM_reasoning": "The gold annotation marked Fall as absent, but the sentence clearly documents a prior fall event. This suggests a potential annotation error in the gold standard.",
+      "errors": [
+        {
+          "category": "Annotation Error",
+          "type": "Incorrect Gold Label"
+        }
+      ]
+    },
+    {
+      "uid": 2009,
+      "sentence": "Patient lives alone but has reliable access to food and community support.",
+      "gold_standard": "A",
+      "LLM_prediction": "FP",
+      "LLM_reasoning": "The model incorrectly associates 'lives alone' with Food_Insecurity, despite explicit documentation of reliable access to food.",
+      "errors": [
+        {
+          "category": "Overgeneralization",
+          "type": "Contextual Error"
+        }
+      ]
+    },
+    {
+      "uid": 2010,
+      "sentence": "AMS noted overnight, resolved by morning and not felt to represent delirium.",
+      "gold_standard": "A",
+      "LLM_prediction": "FP",
+      "LLM_reasoning": "Although altered mental status (AMS) is mentioned, the clinician explicitly states it does not represent delirium. The model fails to incorporate clinician reasoning.",
+      "errors": [
+        {
+          "category": "Exclusion",
+          "type": "Contextual Error"
+        }
+      ]
+    }
+  ]
+}

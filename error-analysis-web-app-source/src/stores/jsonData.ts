@@ -3,19 +3,11 @@ import { defineStore } from 'pinia'
 
 export interface AnnotationTag {
   uid: number
-  id: string
-  spans: string
   sentence: string
-  sentence_spans: string
-  tag: string
-  text: string
-  file_hash: string
-  file_name: string
-  _annotator: string
-  _judgement: string
-  certainty?: string
-  comment: string
-  embedding_tsne: [number, number]
+  gold_standard: string
+  predication_label: string
+  LLM_prediction: string
+  LLM_reasoning: string
   errors?: Array<{
     category: string
     type: string

@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import * as yaml from 'js-yaml'
 
 export interface YamlDataStructure {
-  [category: string]: string[]
+  [category: string]: Record<string, string>
 }
 
 export const useYamlDataStore = defineStore('yamlData', () => {

@@ -2,26 +2,29 @@
 # Or in this single YAML file.
 # We recommend to use the schema file to manage the error definition
 Linguistic:
-  - Lexicon
-  - Orthographic
-  - Morphologic
-  - Syntactic
-  - Semantic
+  Lexicon: "Error caused by missing or incomplete vocabulary entries"
+  Orthographic: "Error due to misspellings or typographical variations"
+  Morphologic: "Error from word form variations such as plurals or tenses"
+  Syntactic: "Error from sentence structure or word order patterns"
+  Semantic: "Error due to ambiguous or multiple meanings of a term"
+
 Contextual:
-  - Section
-  - Certainty
-  - Status
-  - Temporality
-  - Subject
-  - Absence of Context
-  - Exclusion
+  Section: "Error from misinterpreting the document section context"
+  Certainty: "Error in determining the certainty level of a mention"
+  Status: "Error in identifying the status of a condition"
+  Temporality: "Error in determining the time frame of a mention"
+  Subject: "Error in identifying the experiencer (patient vs family)"
+  Absence of Context: "Error when surrounding context is insufficient for classification"
+  Exclusion: "Error from failing to exclude irrelevant mentions"
+
 Annotation:
-  - Missing Annotation
-  - Insufficent Context
-  - Extrapolation of Evidence
-  - Non-defined Concept
-  - Incorrect Annotation
+  Missing Annotation: "Gold standard annotation was not provided for a valid mention"
+  Insufficient Context: "Annotator lacked enough context to make a determination"
+  Extrapolation of Evidence: "Annotation required inference beyond explicit text"
+  Non-defined Concept: "Mention falls outside the defined concept scope"
+  Incorrect Annotation: "Gold standard annotation was incorrectly assigned"
+
 Concept Definition:
-  - Ambiguity
-  - Source Evidence
-  - Change of Status
+  Ambiguity: "Concept definition is unclear or overlaps with other categories"
+  Source Evidence: "Discrepancy in how source documentation supports the concept"
+  Change of Status: "Error from a concept's status changing over time within the record"

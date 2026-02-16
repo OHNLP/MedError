@@ -52,11 +52,17 @@
           <a-collapse-panel
             v-for="(items, category) in yamlStore.data"
             :key="category"
-            :header="`${category} (${items.length} items)`"
+            :header="`${category} (${Object.keys(items).length} items)`"
           >
-            <a-tag v-for="item in items" :key="item" color="blue" class="item-tag">
-              {{ item }}
-            </a-tag>
+            <a-tooltip
+              v-for="[name, description] in Object.entries(items)"
+              :key="name"
+              :title="description"
+            >
+              <a-tag color="blue" class="item-tag">
+                {{ name }}
+              </a-tag>
+            </a-tooltip>
           </a-collapse-panel>
         </a-collapse>
       </div>

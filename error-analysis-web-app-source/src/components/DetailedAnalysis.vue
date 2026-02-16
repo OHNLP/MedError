@@ -1,5 +1,19 @@
 <template>
   <a-card title="Error Analysis Details" class="details-card">
+    <template #extra>
+      <a-dropdown>
+        <a-button type="primary" size="middle">
+          Export
+          <DownOutlined />
+        </a-button>
+        <template #overlay>
+          <a-menu @click="handleExport">
+            <a-menu-item key="json">Export as JSON</a-menu-item>
+            <a-menu-item key="csv">Export as CSV</a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
+    </template>
     <a-tabs v-model:activeKey="activeTab">
       <a-tab-pane key="overview" tab="Overview">
         <div class="overview-content">
@@ -26,40 +40,86 @@
               <div class="details-list">
                 <a-card
                   v-for="(item, index) in getJudgementDetails(selectedJudgement)"
-                  :key="`${item._judgement}-${index}`"
+                  :key="`${item.LLM_prediction}-${index}`"
                   size="small"
                   class="detail-item-card"
                 >
                   <div class="detail-header">
-                    <a-tag :color="getJudgementColor(item._judgement)" size="small">
-                      {{ item._judgement }}
+                    <a-tag :color="getJudgementColor(item.LLM_prediction)" size="small">
+                      {{ item.LLM_prediction }}
                     </a-tag>
                     <span class="item-index">#{{ index + 1 }}</span>
                   </div>
                   <div class="detail-content">
-                    <div class="sentence-section">
-                      <strong>Sentence:</strong>
-                      <p class="sentence-text">{{ item.sentence || 'N/A' }}</p>
+                    <div class="input-section">
+                      <strong>Input:</strong>
+                      <p class="input-text">{{ item.sentence || 'N/A' }}</p>
                     </div>
                     <div class="meta-info">
-                      <div class="meta-item">
-                        <strong>Annotator:</strong> {{ item._annotator || 'N/A' }}
+                      <div class="meta-row">
+                        <div class="meta-item">
+                          <strong>Predication Label:</strong>
+                          {{ item.predication_label || 'N/A' }}
+                        </div>
+                        <div class="meta-item">
+                          <strong>Gold Standard:</strong>
+                          {{ item.gold_standard || 'N/A' }}
+                        </div>
+                      </div>
+                      <div v-if="item.LLM_prediction">
+                        <a-button
+                          type="primary"
+                          ghost
+                          size="small"
+                          class="llm-toggle-btn"
+                          @click="toggleLlmSuggestions(item.uid)"
+                        >
+                          {{
+                            expandedLlm.has(item.uid)
+                              ? 'Hide LLM Suggestions'
+                              : 'Show LLM Suggestions'
+                          }}
+                        </a-button>
+                        <div v-if="expandedLlm.has(item.uid)" class="llm-suggestions">
+                          <div class="llm-detail">
+                            <strong>LLM Prediction:</strong> {{ item.LLM_prediction }}
+                          </div>
+                          <div class="llm-detail">
+                            <strong>LLM Reasoning:</strong>
+                            {{ item.LLM_reasoning || 'N/A' }}
+                          </div>
+                        </div>
                       </div>
                       <div class="meta-item" v-if="item.errors && item.errors.length > 0">
                         <strong>Errors:</strong>
                         <div class="error-list">
                           <div
-                            v-for="error in item.errors"
-                            :key="`${error.category}-${error.type}`"
+                            v-for="(error, errIdx) in item.errors"
+                            :key="errIdx"
                             class="error-item"
                           >
-                            <a-tag color="red" size="small">{{ error.category }}</a-tag>
-                            <span class="error-type">{{ error.type }}</span>
+                            <a-select
+                              :value="error.type"
+                              size="small"
+                              style="min-width: 180px"
+                              @change="(val: string) => updateErrorType(item.uid, errIdx, val)"
+                            >
+                              <a-select-opt-group
+                                v-for="group in groupedCategoryOptions"
+                                :key="group.group"
+                                :label="group.group"
+                              >
+                                <a-select-option
+                                  v-for="opt in group.items"
+                                  :key="opt.key"
+                                  :value="opt.key"
+                                >
+                                  {{ opt.key }}
+                                </a-select-option>
+                              </a-select-opt-group>
+                            </a-select>
                           </div>
                         </div>
-                      </div>
-                      <div class="meta-item">
-                        <strong>LLM reasoning:</strong> {{ item.comment || 'N/A' }}
                       </div>
                     </div>
                   </div>
@@ -93,14 +153,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { DownOutlined } from '@ant-design/icons-vue'
+import { useYamlDataStore } from '../stores/yamlData'
+import { useJsonDataStore } from '../stores/jsonData'
 
 interface Tag {
-  _judgement: string
-  tag: string
+  uid: number
+  LLM_prediction: string
+  gold_standard: string
+  predication_label: string
   sentence?: string
-  _annotator?: string
-  comment?: string
+  LLM_reasoning?: string
   errors?: Array<{
     category: string
     type: string
@@ -117,16 +181,52 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const yamlStore = useYamlDataStore()
+const jsonStore = useJsonDataStore()
+
+const groupedCategoryOptions = computed(() => {
+  if (!yamlStore.data) return []
+  return Object.entries(yamlStore.data).map(([group, subcategories]) => ({
+    group,
+    items: Object.entries(subcategories).map(([key, description]) => ({ key, description })),
+  }))
+})
+
+function updateErrorType(uid: number, errIdx: number, newType: string) {
+  const tag = jsonStore.data?.tags.find((t) => t.uid === uid)
+  if (tag?.errors?.[errIdx]) {
+    tag.errors[errIdx].type = newType
+    // Also update the parent category
+    const parentGroup = groupedCategoryOptions.value.find((g) =>
+      g.items.some((item) => item.key === newType),
+    )
+    if (parentGroup) {
+      tag.errors[errIdx].category = parentGroup.group
+    }
+  }
+}
+
 const activeTab = ref('overview')
 const errorActiveKeys = ref<string[]>([])
 const showDetails = ref(false)
 const selectedJudgement = ref('')
+const expandedLlm = ref<Set<number>>(new Set())
+
+function toggleLlmSuggestions(uid: number) {
+  const next = new Set(expandedLlm.value)
+  if (next.has(uid)) {
+    next.delete(uid)
+  } else {
+    next.add(uid)
+  }
+  expandedLlm.value = next
+}
 
 // Analysis functions
 function getJudgementStats(): Record<string, number> {
   const stats: Record<string, number> = {}
   props.jsonData?.tags?.forEach((tag) => {
-    stats[tag._judgement] = (stats[tag._judgement] || 0) + 1
+    stats[tag.LLM_prediction] = (stats[tag.LLM_prediction] || 0) + 1
   })
   return stats
 }
@@ -154,6 +254,7 @@ function getJudgementColor(judgement: string): string {
     FN: 'orange',
     TP: 'green',
     TN: 'blue',
+    P: 'purple',
   }
   return colors[judgement] || 'default'
 }
@@ -171,7 +272,46 @@ function toggleJudgementDetails(judgement: string) {
 }
 
 function getJudgementDetails(judgement: string): Tag[] {
-  return props.jsonData?.tags?.filter((tag) => tag._judgement === judgement) || []
+  return props.jsonData?.tags?.filter((tag) => tag.LLM_prediction === judgement) || []
+}
+
+function handleExport({ key }: { key: string }) {
+  const tags = jsonStore.data?.tags
+  if (!tags?.length) return
+
+  let content: string
+  let mimeType: string
+  let extension: string
+
+  if (key === 'json') {
+    content = JSON.stringify({ tags }, null, 2)
+    mimeType = 'application/json'
+    extension = 'json'
+  } else {
+    // CSV
+    const headers = ['uid', 'sentence', 'gold_standard', 'predication_label', 'LLM_prediction', 'LLM_reasoning', 'errors']
+    const rows = tags.map((tag) => [
+      tag.uid,
+      `"${(tag.sentence ?? '').replace(/"/g, '""')}"`,
+      `"${tag.gold_standard ?? ''}"`,
+      `"${tag.predication_label ?? ''}"`,
+      `"${tag.LLM_prediction ?? ''}"`,
+      `"${(tag.LLM_reasoning ?? '').replace(/"/g, '""')}"`,
+      `"${(tag.errors ?? []).map((e) => `${e.category}: ${e.type}`).join('; ')}"`,
+    ])
+    content = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
+    mimeType = 'text/csv'
+    extension = 'csv'
+  }
+
+  const blob = new Blob([content], { type: mimeType })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  const baseName = jsonStore.fileName?.replace(/\.[^.]+$/, '') || 'export'
+  a.download = `${baseName}_updated.${extension}`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 </script>
 
@@ -253,7 +393,7 @@ function getJudgementDetails(judgement: string): Tag[] {
 }
 
 .details-list {
-  max-height: 400px;
+  max-height: 70vh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -284,14 +424,14 @@ function getJudgementDetails(judgement: string): Tag[] {
   gap: 12px;
 }
 
-.sentence-section {
+.input-section {
   background: #f8fafc;
   padding: 12px;
   border-radius: 6px;
   border-left: 3px solid #3b82f6;
 }
 
-.sentence-text {
+.input-text {
   margin: 8px 0 0 0;
   line-height: 1.5;
   color: #374151;
@@ -302,6 +442,11 @@ function getJudgementDetails(judgement: string): Tag[] {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.meta-row {
+  display: flex;
+  gap: 24px;
 }
 
 .meta-item {
@@ -331,5 +476,29 @@ function getJudgementDetails(judgement: string): Tag[] {
 .error-type {
   font-size: 13px;
   color: #6b7280;
+}
+
+.llm-toggle-btn {
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.llm-suggestions {
+  margin-top: 4px;
+  padding: 0 0 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.llm-detail {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.llm-detail strong {
+  color: #4b5563;
 }
 </style>

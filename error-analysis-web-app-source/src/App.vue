@@ -1,6 +1,21 @@
 <script setup lang="ts">
+import { ref, computed, watch, nextTick } from 'vue'
 import YamlUploader from './components/YamlUploader.vue'
 import JsonUploader from './components/JsonUploader.vue'
+import { useYamlDataStore } from './stores/yamlData'
+
+const yamlStore = useYamlDataStore()
+const yamlData = computed(() => yamlStore.data)
+const yamlRawContent = computed(() => yamlStore.rawContent)
+const yamlFileName = computed(() => yamlStore.fileName)
+const activeTab = ref('analysis')
+
+watch(yamlData, async (val) => {
+  if (val) {
+    await nextTick()
+    activeTab.value = 'yaml'
+  }
+})
 </script>
 
 <template>
@@ -9,7 +24,7 @@ import JsonUploader from './components/JsonUploader.vue'
       <a-layout-sider class="sider" width="400">
         <div class="sider-content">
           <div class="header-section">
-            <h1>Error Analysis Visualization</h1>
+            <h1>MedError Interface</h1>
             <p>Upload your YAML file to get started with error analysis</p>
           </div>
           <YamlUploader />
@@ -17,7 +32,14 @@ import JsonUploader from './components/JsonUploader.vue'
       </a-layout-sider>
 
       <a-layout-content class="main-content">
-        <JsonUploader />
+        <a-tabs v-model:activeKey="activeTab" class="main-tabs">
+          <a-tab-pane key="analysis" tab="Analysis Results">
+            <JsonUploader />
+          </a-tab-pane>
+          <a-tab-pane v-if="yamlData" key="yaml" :tab="yamlFileName">
+            <pre class="yaml-raw-content">{{ yamlRawContent }}</pre>
+          </a-tab-pane>
+        </a-tabs>
       </a-layout-content>
     </a-layout>
   </div>
@@ -83,8 +105,42 @@ body {
 
 .main-content {
   background: #ffffff;
-  padding: 24px;
   overflow-y: auto;
   height: 100vh;
+}
+
+.main-tabs {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-tabs :deep(.ant-tabs-nav) {
+  padding: 0 24px;
+  margin-bottom: 0;
+}
+
+.main-tabs :deep(.ant-tabs-content-holder) {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.main-tabs :deep(.ant-tabs-content) {
+  height: 100%;
+}
+
+.main-tabs :deep(.ant-tabs-tabpane) {
+  height: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.yaml-raw-content {
+  margin: 0;
+  font-family: monospace;
+  font-size: 13px;
+  white-space: pre;
+  overflow-x: auto;
 }
 </style>

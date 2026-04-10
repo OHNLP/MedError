@@ -5,7 +5,9 @@ export interface AnnotationTag {
   uid: number
   sentence: string
   gold_standard: string
-  predication_label: string
+  original_prediction: string
+  model_type: string
+  error_class: string
   LLM_prediction: string
   LLM_reasoning: string
   errors?: Array<{

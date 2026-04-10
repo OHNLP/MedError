@@ -40,13 +40,13 @@
               <div class="details-list">
                 <a-card
                   v-for="(item, index) in getJudgementDetails(selectedJudgement)"
-                  :key="`${item.LLM_prediction}-${index}`"
+                  :key="`${item.error_class}-${index}`"
                   size="small"
                   class="detail-item-card"
                 >
                   <div class="detail-header">
-                    <a-tag :color="getJudgementColor(item.LLM_prediction)" size="small">
-                      {{ item.LLM_prediction }}
+                    <a-tag :color="getJudgementColor(item.error_class)" size="small">
+                      {{ item.error_class }}
                     </a-tag>
                     <span class="item-index">#{{ index + 1 }}</span>
                   </div>
@@ -58,12 +58,16 @@
                     <div class="meta-info">
                       <div class="meta-row">
                         <div class="meta-item">
-                          <strong>Predication Label:</strong>
-                          {{ item.predication_label || 'N/A' }}
+                          <strong>Prediction Label:</strong>
+                          {{ item.original_prediction || 'N/A' }}
                         </div>
                         <div class="meta-item">
                           <strong>Gold Standard:</strong>
                           {{ item.gold_standard || 'N/A' }}
+                        </div>
+                        <div class="meta-item">
+                          <strong>Model Type:</strong>
+                          {{ item.model_type || 'N/A' }}
                         </div>
                       </div>
                       <div v-if="item.LLM_prediction">
@@ -162,7 +166,9 @@ interface Tag {
   uid: number
   LLM_prediction: string
   gold_standard: string
-  predication_label: string
+  original_prediction: string
+  model_type: string
+  error_class: string
   sentence?: string
   LLM_reasoning?: string
   errors?: Array<{
@@ -226,7 +232,7 @@ function toggleLlmSuggestions(uid: number) {
 function getJudgementStats(): Record<string, number> {
   const stats: Record<string, number> = {}
   props.jsonData?.tags?.forEach((tag) => {
-    stats[tag.LLM_prediction] = (stats[tag.LLM_prediction] || 0) + 1
+    stats[tag.error_class] = (stats[tag.error_class] || 0) + 1
   })
   return stats
 }
@@ -272,7 +278,7 @@ function toggleJudgementDetails(judgement: string) {
 }
 
 function getJudgementDetails(judgement: string): Tag[] {
-  return props.jsonData?.tags?.filter((tag) => tag.LLM_prediction === judgement) || []
+  return props.jsonData?.tags?.filter((tag) => tag.error_class === judgement) || []
 }
 
 function handleExport({ key }: { key: string }) {
@@ -289,12 +295,12 @@ function handleExport({ key }: { key: string }) {
     extension = 'json'
   } else {
     // CSV
-    const headers = ['uid', 'sentence', 'gold_standard', 'predication_label', 'LLM_prediction', 'LLM_reasoning', 'errors']
+    const headers = ['uid', 'sentence', 'gold_standard', 'original_prediction', 'model_type', 'error_class', 'LLM_prediction', 'LLM_reasoning', 'errors']
     const rows = tags.map((tag) => [
       tag.uid,
       `"${(tag.sentence ?? '').replace(/"/g, '""')}"`,
       `"${tag.gold_standard ?? ''}"`,
-      `"${tag.predication_label ?? ''}"`,
+      `"${tag.original_prediction ?? ''}"`,
       `"${tag.LLM_prediction ?? ''}"`,
       `"${(tag.LLM_reasoning ?? '').replace(/"/g, '""')}"`,
       `"${(tag.errors ?? []).map((e) => `${e.category}: ${e.type}`).join('; ')}"`,

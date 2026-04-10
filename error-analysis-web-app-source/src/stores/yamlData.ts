@@ -8,6 +8,7 @@ export interface YamlDataStructure {
 
 export const useYamlDataStore = defineStore('yamlData', () => {
   const data = ref<YamlDataStructure | null>(null)
+  const rawContent = ref<string>('')
   const fileName = ref<string>('')
   const isLoading = ref<boolean>(false)
   const error = ref<string>('')
@@ -22,6 +23,7 @@ export const useYamlDataStore = defineStore('yamlData', () => {
       reader.onload = (e) => {
         try {
           const content = e.target?.result as string
+          rawContent.value = content
           const parsedData = yaml.load(content) as YamlDataStructure
 
           data.value = parsedData
@@ -47,12 +49,14 @@ export const useYamlDataStore = defineStore('yamlData', () => {
 
   function clearData() {
     data.value = null
+    rawContent.value = ''
     fileName.value = ''
     error.value = ''
   }
 
   return {
     data,
+    rawContent,
     fileName,
     isLoading,
     error,

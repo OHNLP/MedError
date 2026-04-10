@@ -28,6 +28,7 @@
 
 <script setup lang="ts">
 interface Tag {
+  error_class: string
   LLM_prediction: string
   gold_standard: string
   errors?: Array<{
@@ -48,11 +49,11 @@ const props = defineProps<Props>()
 
 // Analysis functions
 function getFalsePositives(): number {
-  return props.jsonData?.tags?.filter((tag) => tag.LLM_prediction === 'FP').length || 0
+  return props.jsonData?.tags?.filter((tag) => tag.error_class === 'FP').length || 0
 }
 
 function getFalseNegatives(): number {
-  return props.jsonData?.tags?.filter((tag) => tag.LLM_prediction === 'FN').length || 0
+  return props.jsonData?.tags?.filter((tag) => tag.error_class === 'FN').length || 0
 }
 </script>
 

@@ -3,17 +3,12 @@
     <a-spin :spinning="jsonStore.isLoading" tip="Parsing JSON file...">
       <!-- Success state when JSON is loaded -->
       <div v-if="jsonStore.data && !jsonStore.error" class="json-success">
-        <a-card class="json-result-card">
-          <a-result
-            status="success"
-            :title="jsonStore.fileName"
-            sub-title="JSON file successfully loaded"
-          >
-            <template #extra>
-              <a-button type="primary" @click="jsonStore.clearData()"> Upload New File </a-button>
-            </template>
-          </a-result>
-        </a-card>
+        <div class="json-result-card">
+          <check-circle-outlined class="success-icon" />
+          <span class="file-name">{{ jsonStore.fileName }}</span>
+          <span class="file-subtitle">JSON file successfully loaded</span>
+          <a-button size="small" type="primary" @click="jsonStore.clearData()">Upload New File</a-button>
+        </div>
 
         <!-- Analysis Summary -->
         <AnalysisSummary :json-data="jsonStore.data" />
@@ -82,7 +77,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { FileTextOutlined } from '@ant-design/icons-vue'
+import { FileTextOutlined, CheckCircleOutlined } from '@ant-design/icons-vue'
 import { useJsonDataStore } from '../stores/jsonData'
 import { useYamlDataStore } from '../stores/yamlData'
 import AnalysisSummary from './AnalysisSummary.vue'
@@ -253,20 +248,27 @@ function triggerFileInput() {
 }
 
 .json-result-card {
-  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #b7eb8f;
+  background: #f6ffed;
+  border-radius: 6px;
 }
 
-.json-result-card :deep(.ant-result) {
-  padding: 16px 0;
-}
-
-.json-result-card :deep(.ant-result-title) {
-  margin-bottom: 8px;
+.json-result-card .success-icon {
+  color: #52c41a;
   font-size: 16px;
 }
 
-.json-result-card :deep(.ant-result-subtitle) {
-  margin-bottom: 16px;
+.json-result-card .file-name {
+  font-weight: 600;
+}
+
+.json-result-card .file-subtitle {
+  color: #888;
+  flex: 1;
 }
 
 .error-alert {

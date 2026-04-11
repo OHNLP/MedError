@@ -1,107 +1,39 @@
-# MedError
+# error-analysis
 
-A project for medical error detection and analysis
+This template should help get you started developing with Vue 3 in Vite.
 
-## 🌐 Try the App
+## Recommended IDE Setup
 
-https://ohnlp.org/MedError/
+[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
 
----
+## Type Support for `.vue` Imports in TS
 
-## System Requirements
+TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
 
-### Operating Systems
+## Customize configuration
 
-This software has been tested on:
+See [Vite Configuration Reference](https://vite.dev/config/).
 
-- **macOS** (Darwin 24.2.0 and later)
-- **Linux** (Ubuntu 20.04, 22.04)
-- **Windows** (Windows 10/11 with WSL2 recommended)
+## Project Setup
 
-## 📊 Sample Data
-
-Sample data files are available in the `assets/` folder:
-
-- `error_definition.yaml` - Error category definitions
-- `error_labels.json` - Annotated medical text examples
-
----
-
-## Installation Guide
-
-### Step 1: Clone the Repository
-
-```bash
-git clone https://github.com/OHNLP/MedError.git
-cd MedError
+```sh
+pnpm install
 ```
 
-### Step 2: Create a Virtual Environment
+### Compile and Hot-Reload for Development
 
-```bash
-conda env create -f environment.yml
-conda activate mederror
+```sh
+pnpm dev
 ```
 
-### Step 3: Install Dependencies
+### Type-Check, Compile and Minify for Production
 
-```bash
-pip install -e .
+```sh
+pnpm build
 ```
 
-For development dependencies:
+### Lint with [ESLint](https://eslint.org/)
 
-```bash
-pip install -e .[dev]
+```sh
+pnpm lint
 ```
-
-### Typical Install Time
-
-- **With Conda**: ~5 minutes
-
----
-
-## Demo
-
-** Edit path in the code to run the demo**
-
-1. **Run error classification**:
-
-   ```bash
-   python src/mederror/prompt.py
-   ```
-
-2. **Post-process results**:
-
-   ```bash
-   python src/mederror/postprocess.py
-   ```
-
-3. **Evaluate results**:
-   ```bash
-   python src/mederror/eval.py
-   ```
-
-## Contribution Guidelines
-
-If you plan to contribute to this repository, follow these steps:
-
-1. Fork the repository and create a new branch for your changes:
-
-```bash
-git checkout -b your-branch-name
-```
-
-2. Install development dependencies:
-
-```bash
-pip install .[dev]
-```
-
-3. Set up pre-commit hooks:
-
-```bash
-pre-commit install
-```
-
-4. Commit your changes and open pull request with a clear description of changes.

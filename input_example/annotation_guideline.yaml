@@ -1,0 +1,85 @@
+keywords:
+
+  Delirium:
+    definition: Clinical diagnosis or explicit mention of delirium
+    examples:
+      - "Patient developed acute delirium postoperatively"
+      - "Delirium noted during hospital stay"
+      - "Episode consistent with delirium"
+
+  AMS:
+    definition: Altered mental status indicating change in cognition or awareness
+    examples:
+      - "Patient presents with AMS"
+      - "Acute AMS observed overnight"
+      - "Mental status altered from baseline"
+
+  Hallucination:
+    definition: Perception without external stimulus
+    examples:
+      - "Patient reports visual hallucinations"
+      - "Experiencing auditory hallucinations"
+      - "Seeing things that are not there"
+
+  Confusion:
+    definition: Impaired thinking or lack of clarity
+    examples:
+      - "Patient appears confused"
+      - "Episodes of confusion noted"
+      - "Increasing confusion over the past day"
+
+  Disoriented:
+    definition: Impaired awareness of time, place, or person
+    examples:
+      - "Disoriented to time and place"
+      - "Patient is disoriented x3"
+      - "Not oriented to surroundings"
+
+  Reoriented:
+    definition: Restoration or improvement of orientation
+    examples:
+      - "Patient was reoriented successfully"
+      - "Easily reoriented with cues"
+      - "Reoriented after prompting"
+
+  Encephalopathy:
+    definition: Global brain dysfunction, often medically diagnosed
+    examples:
+      - "Diagnosed with metabolic encephalopathy"
+      - "Hepatic encephalopathy suspected"
+      - "Signs of encephalopathy present"
+
+  Agitated:
+    definition: Increased restlessness, irritability, or motor activity
+    examples:
+      - "Patient is agitated and pacing in the room"
+      - "Episodes of agitation noted overnight"
+      - "Patient shows aggression toward staff"
+
+  Fluctuation:
+    definition: Symptoms that vary or change over time
+    examples:
+      - "Mental status fluctuates throughout the day"
+      - "Symptoms waxing and waning"
+      - "Condition shows fluctuation over time"
+
+  Inattention:
+    definition: Difficulty maintaining or directing attention
+    examples:
+      - "Unable to focus on questions"
+      - "Difficulty maintaining attention"
+      - "Easily distracted during exam"
+
+  Disorganized thinking:
+    definition: Illogical or incoherent thought processes
+    examples:
+      - "Speech is disorganized"
+      - "Thought process is incoherent"
+      - "Unclear flow of ideas"
+
+  Disconnected:
+    definition: Reduced responsiveness or engagement
+    examples:
+      - "Minimally responsive to stimuli"
+      - "Drowsy but arousable"
+      - "Decreased responsiveness observed"

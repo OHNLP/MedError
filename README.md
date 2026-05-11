@@ -1,6 +1,10 @@
-# error-analysis
+# MedError
 
-This template should help get you started developing with Vue 3 in Vite.
+A project for medical error detection and analysis
+
+## 🌐 Try the App
+
+https://ohnlp.org/MedError/
 
 ## Recommended IDE Setup
 

@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "index.html"
+      - "error-analysis-web-app-source/index.html"
   workflow_dispatch: # Allow manual triggering
 
 permissions:
@@ -30,10 +30,13 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Prepare artifact directory
+        run: mkdir -p _site && cp error-analysis-web-app-source/index.html _site/
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "index.html"
+          path: "_site"
 
       - name: Deploy to GitHub Pages
         id: deployment

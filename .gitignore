@@ -166,5 +166,8 @@ cython_debug/
 data/
 .DS_Store
 
+# Node.js
+node_modules/
+
 #models
 models/

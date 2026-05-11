@@ -1,6 +1,6 @@
 # conda env create -f environment.yml
 
-name: *********  # set the name here
+name: mederror
 channels:
   - defaults
   - conda-forge
@@ -12,6 +12,6 @@ dependencies:
   - numpy
   - ipykernel
   - pip:
-    - python-dotenv
-    - pyodbc
-    - -e .
+      - python-dotenv
+      - pyodbc
+      - -e .

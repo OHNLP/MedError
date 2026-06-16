@@ -119,7 +119,7 @@ After loading all three files, MedError produces:
 
 ## Error Taxonomy
 
-The full taxonomy is available at [`Taxonomy/error_taxonomy.md`](Taxonomy/error_taxonomy.md).
+The full taxonomy is available at [`Taxonomy/error_taxonomy.md`](Taxonomy/error_taxonomy_v2_1).
 
 Six error dimensions are supported:
 

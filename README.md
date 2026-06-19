@@ -98,12 +98,52 @@ Six error dimensions are supported:
 
 ## LLM Configuration
 
-MedError can call an LLM to automatically suggest an error class and reasoning for each FP/FN case. Supported providers:
+MedError can call an LLM to automatically suggest an error class and reasoning for each FP/FN case. Configure the provider in the **LLM Config** sidebar panel before running analysis.
 
-- **Azure OpenAI** — requires endpoint, deployment name, and API key
-- **Ollama** — local inference via OpenAI-compatible endpoint (e.g., `http://localhost:11434`)
+### Option A — Azure OpenAI
 
-Configure the provider in the **LLM Config** sidebar panel before running analysis.
+In the **LLM Config** panel, select **Azure OpenAI** and fill in:
+
+| Field | Where to find it |
+|---|---|
+| Endpoint | Azure Portal → your OpenAI resource → Keys and Endpoint |
+| Deployment name | Azure AI Studio → Deployments → your model name |
+| API key | Azure Portal → your OpenAI resource → Keys and Endpoint |
+
+### Option B — Ollama (local, no API key required)
+
+Ollama runs models locally on your machine and exposes an OpenAI-compatible API. No account or API key is needed.
+
+**1. Install Ollama**
+
+Download and install from [https://ollama.com/download](https://ollama.com/download) for macOS, Windows, or Linux.
+
+**2. Pull a model**
+
+Open a terminal and pull a model. A 7–14B parameter model is sufficient for error classification:
+
+```sh
+ollama pull llama3.1        # 8B, good balance of speed and accuracy
+ollama pull mistral         # 7B, fast on CPU
+ollama pull qwen2.5:14b     # 14B, stronger reasoning
+```
+
+**3. Start the Ollama server**
+
+```sh
+ollama serve
+```
+
+Ollama runs at `http://localhost:11434` by default and stays running in the background.
+
+**4. Configure in MedError**
+
+In the **LLM Config** panel, select **Ollama** and set:
+
+- **Base URL**: `http://localhost:11434` (default, no change needed)
+- **Model name**: the model you pulled (e.g., `llama3.1`, `mistral`, `qwen2.5:14b`)
+
+> **Note:** If you are running MedError from the live demo at `https://ohnlp.org/MedError/`, your browser will block requests to `http://localhost` due to mixed-content restrictions. Use the standalone `index.html` opened locally instead.
 
 ---
 

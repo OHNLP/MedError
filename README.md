@@ -10,7 +10,7 @@
 
 Try the app: **https://ohnlp.org/MedError/**
 
-![App Screenshot](assets/screenshots_small.gif)
+![App Screenshot](assets/screenshots.gif)
 
 ---
 
@@ -38,7 +38,7 @@ If you use MedError in your research, please cite:
 
 ### Option A — No install (recommended)
 
-Download [`index.html`](index.html) from this repo and open it directly in a browser. No server or build step required — the entire app is bundled into a single file.
+Download [`index.html`](https://github.com/OHNLP/MedError/releases/tag/v2.1.0) from this repo and open it directly in a browser. No server or build step required — the entire app is bundled into a single file.
 
 ### Option B — Run from source
 

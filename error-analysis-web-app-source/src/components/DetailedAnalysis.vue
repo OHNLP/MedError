@@ -58,6 +58,9 @@
           <a-tag :color="currentItem.error_class === 'FP' ? 'red' : 'blue'" class="type-badge">
             {{ currentItem.error_class }}
           </a-tag>
+          <span class="error-direction-hint">
+            {{ currentItem.error_class === 'FP' ? 'Concept inaccurately identified by model' : 'Concept missed by model' }}
+          </span>
           <transition name="fade">
             <span v-if="currentItem.human_reviewed" class="reviewed-badge">
               <check-circle-outlined /> Reviewed
@@ -72,7 +75,41 @@
 
         <!-- Sentence -->
         <div class="sentence-block">
-          <p class="sentence-text">{{ currentItem.sentence }}</p>
+          <div class="sentence-tools">
+            <button
+              type="button"
+              class="btn-hl-toggle"
+              :class="{ active: showHighlights }"
+              :title="showHighlights ? 'Turn off trigger highlighting' : 'Turn on trigger highlighting'"
+              @click="showHighlights = !showHighlights"
+            >
+              <span>🔍</span> {{ showHighlights ? 'Highlights on' : 'Highlights off' }}
+            </button>
+          </div>
+          <!-- eslint-disable-next-line vue/no-v-html -->
+          <p class="sentence-text" v-html="highlightedHtml" />
+
+          <!-- Signal chips -->
+          <template v-if="showHighlights && detectedCategories.length > 0">
+            <div class="signal-row">
+              <span class="signal-label">Signals:</span>
+              <span
+                v-for="cat in detectedCategories"
+                :key="cat"
+                class="signal-chip"
+                :class="`sig-${cat}`"
+              >{{ CATEGORY_META[cat].label }}</span>
+            </div>
+            <div v-if="hasMismatch" class="mismatch-banner">
+              ⚠ Signal mismatch — detected signal(s) may not align with LLM prediction "{{ normalisedPrediction }}"
+            </div>
+          </template>
+          <div
+            v-else-if="showHighlights && detectedCategories.length === 0 && currentItem.error_class === 'FN'"
+            class="no-signal-hint"
+          >
+            💡 No context signals detected — if no direct text evidence exists, consider <strong>Implied_Inference</strong>
+          </div>
         </div>
 
         <!-- Meta row -->
@@ -97,10 +134,6 @@
             <bulb-outlined class="llm-icon" />
             <span class="llm-title">LLM Analysis</span>
             <a-tag color="purple" class="llm-class-tag">{{ normalisedPrediction }}</a-tag>
-            <!-- #4 Difficulty flag -->
-            <span v-if="isDifficult" class="difficulty-badge" title="Low inter-rater agreement class (paper finding)">
-              ⚠ Review carefully
-            </span>
           </div>
           <p class="llm-reasoning">{{ currentItem.LLM_reasoning }}</p>
         </div>
@@ -208,6 +241,12 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onUnmounted } from 'vue'
 import {
+  findTriggerMatches,
+  buildHighlightedHtml,
+  CATEGORY_META,
+  type TriggerCategory,
+} from '../data/triggerWords'
+import {
   CheckCircleOutlined,
   CheckOutlined,
   EditOutlined,
@@ -258,6 +297,48 @@ const LOW_F1_CLASSES = new Set([
 const isDifficult = computed(() => {
   if (!currentItem.value?.llm_analyzed) return false
   return LOW_F1_CLASSES.has(normalisedPrediction.value)
+})
+
+// ── Trigger word highlighting ──
+const showHighlights = ref(true)
+
+const triggerMatches = computed(() => {
+  if (!showHighlights.value || !currentItem.value?.sentence) return []
+  return findTriggerMatches(currentItem.value.sentence)
+})
+
+const detectedCategories = computed((): TriggerCategory[] => {
+  const seen = new Set<TriggerCategory>()
+  triggerMatches.value.forEach(m => seen.add(m.category))
+  return Array.from(seen)
+})
+
+// Map error class → expected trigger categories for mismatch detection
+const PRED_TO_CATS: Record<string, TriggerCategory[]> = {
+  Negation: ['neg'],
+  Possible_and_Probable_Language: ['poss'],
+  Differential_Diagnosis: ['poss'],
+  Hypothetical_Language: ['hypo'],
+  Medical_Risk: ['hypo'],
+  Medical_Instruction: ['hypo'],
+  History: ['hist'],
+  Family_Member: ['exp'],
+  Family_History: ['exp'],
+  Other_Subject: ['exp'],
+}
+
+const hasMismatch = computed(() => {
+  if (!showHighlights.value || !currentItem.value?.llm_analyzed) return false
+  const expected = PRED_TO_CATS[normalisedPrediction.value]
+  if (!expected) return false
+  const detected = new Set(detectedCategories.value)
+  return !expected.some(cat => detected.has(cat))
+})
+
+const highlightedHtml = computed(() => {
+  const text = currentItem.value?.sentence ?? ''
+  if (!text) return ''
+  return buildHighlightedHtml(text, triggerMatches.value)
 })
 
 // ── #5 Session timer ──
@@ -619,6 +700,12 @@ function handleExport({ key }: { key: string }) {
 
 .type-badge { font-size: 13px; font-weight: 700; margin: 0; }
 
+.error-direction-hint {
+  font-size: 12px;
+  color: #888;
+  font-style: italic;
+}
+
 .reviewed-badge {
   display: flex;
   align-items: center;
@@ -665,6 +752,93 @@ function handleExport({ key }: { key: string }) {
   line-height: 1.65;
   color: #1f2937;
   font-style: italic;
+}
+
+/* Highlight toggle */
+.sentence-tools {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.btn-hl-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 11px;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.btn-hl-toggle:hover { border-color: #93c5fd; color: #1d4ed8; }
+.btn-hl-toggle.active { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+
+/* Highlight marks — applied via v-html, so :deep() is required */
+:deep(.hl-neg)  { background: #fca5a5; color: #7f1d1d; border-radius: 3px; padding: 0 2px; }
+:deep(.hl-poss) { background: #fde68a; color: #78350f; border-radius: 3px; padding: 0 2px; }
+:deep(.hl-hypo) { background: #f9a8d4; color: #831843; border-radius: 3px; padding: 0 2px; }
+:deep(.hl-hist) { background: #cbd5e1; color: #1e293b; border-radius: 3px; padding: 0 2px; }
+:deep(.hl-exp)  { background: #99f6e4; color: #064e3b; border-radius: 3px; padding: 0 2px; }
+
+/* Signal chips row */
+.signal-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.signal-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.signal-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sig-neg  { background: #fee2e2; color: #b91c1c; }
+.sig-poss { background: #fef3c7; color: #92400e; }
+.sig-hypo { background: #fce7f3; color: #9d174d; }
+.sig-hist { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+.sig-exp  { background: #ccfbf1; color: #0f766e; }
+
+/* Mismatch / no-signal hints */
+.mismatch-banner {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #9a3412;
+  font-weight: 500;
+}
+
+.no-signal-hint {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #075985;
 }
 
 /* Meta */

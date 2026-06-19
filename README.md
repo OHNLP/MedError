@@ -10,6 +10,8 @@
 
 Try the app: **https://ohnlp.org/MedError/**
 
+> The live demo supports Azure OpenAI out of the box. **Ollama (local LLM) does not work from the live demo** — use the standalone `index.html` instead (see Quickstart below).
+
 ![App Screenshot](assets/screenshots.gif)
 
 ---
@@ -31,6 +33,8 @@ The error taxonomy covers six dimensions — Annotation, Contextual, Linguistic,
 If you use MedError in your research, please cite:
 
 > Liu H, Fu S, Lu Q, Ahn J, Chen F, Yin H, Wen J, Yue Z, Harrison T, Jun J, Ruan X. MedError: A Machine-Assisted Framework for Systematic Error Analysis in Clinical Concept Extraction. Research Square. 2025 Sep 17:rs-3.
+
+> Fu S, Wang L, He H, Wen A, Zong N, Kumari A, Liu F, Zhou S, Zhang R, Li C, Wang Y. A taxonomy for advancing systematic error analysis in multi-site electronic health record-based clinical concept extraction. Journal of the American Medical Informatics Association. 2024 Jul;31(7):1493-502.
 
 ---
 
@@ -114,6 +118,8 @@ In the **LLM Config** panel, select **Azure OpenAI** and fill in:
 
 Ollama runs models locally on your machine and exposes an OpenAI-compatible API. No account or API key is needed.
 
+> ⚠️ **Ollama requires running MedError locally.** The live demo at `https://ohnlp.org/MedError/` is served over HTTPS and cannot connect to `http://localhost` due to browser mixed-content restrictions. To use Ollama, open the standalone `index.html` file directly in your browser (see [Quickstart Option A](#option-a--no-install-recommended)).
+
 **1. Install Ollama**
 
 Download and install from [https://ollama.com/download](https://ollama.com/download) for macOS, Windows, or Linux.
@@ -128,22 +134,22 @@ ollama pull mistral         # 7B, fast on CPU
 ollama pull qwen2.5:14b     # 14B, stronger reasoning
 ```
 
-**3. Start the Ollama server**
+**3. Start the Ollama server with CORS enabled**
 
 ```sh
-ollama serve
+OLLAMA_ORIGINS="*" ollama serve
 ```
+
+> The `OLLAMA_ORIGINS="*"` flag is required so the browser can reach the local server. On Windows use `set OLLAMA_ORIGINS=*` before running `ollama serve`.
 
 Ollama runs at `http://localhost:11434` by default and stays running in the background.
 
 **4. Configure in MedError**
 
-In the **LLM Config** panel, select **Ollama** and set:
+Open the standalone `index.html` locally (do not use the `ohnlp.org` live demo for Ollama). In the **LLM Config** panel, select **Ollama** and set:
 
 - **Base URL**: `http://localhost:11434` (default, no change needed)
 - **Model name**: the model you pulled (e.g., `llama3.1`, `mistral`, `qwen2.5:14b`)
-
-> **Note:** If you are running MedError from the live demo at `https://ohnlp.org/MedError/`, your browser will block requests to `http://localhost` due to mixed-content restrictions. Use the standalone `index.html` opened locally instead.
 
 ---
 

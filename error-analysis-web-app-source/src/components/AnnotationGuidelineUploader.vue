@@ -22,21 +22,25 @@
         <div v-else class="upload-area">
           <a-upload-dragger
             :before-upload="handleUpload"
-            accept=".yaml,.yml"
+            accept=".yaml,.yml,.csv"
             :show-upload-list="false"
             :multiple="false"
           >
             <p class="ant-upload-drag-icon" style="margin: 4px 0">
               <file-text-outlined style="font-size: 24px; color: #1890ff" />
             </p>
-            <p class="ant-upload-text" style="font-size: 13px">Drop concept extraction guideline YAML</p>
+            <p class="ant-upload-text" style="font-size: 13px">Drop concept extraction guideline</p>
             <p class="ant-upload-hint" style="font-size: 11px">
-              Expects <code>keywords: &#123; concept: &#123; definition, examples &#125; &#125;</code>
+              YAML: <code>keywords: &#123; concept: &#123; definition, examples &#125; &#125;</code><br/>
+              CSV: columns <code>concept, definition, examples</code> (examples pipe-separated)
             </p>
           </a-upload-dragger>
           <div class="example-row">
-            <a-tag color="blue" class="example-tag" @click="downloadGuidelineExample">
-              ↓ Download guideline example
+            <a-tag color="blue" class="example-tag" @click="downloadGuidelineExample('yaml')">
+              ↓ YAML example
+            </a-tag>
+            <a-tag color="cyan" class="example-tag" @click="downloadGuidelineExample('csv')">
+              ↓ CSV example
             </a-tag>
           </div>
         </div>
@@ -67,26 +71,50 @@ const keywordCount = computed(() =>
   guidelineStore.data ? Object.keys(guidelineStore.data.keywords).length : 0,
 )
 
-function downloadGuidelineExample() {
-  const blob = new Blob([guidelineExampleRaw], { type: 'text/yaml' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'annotation_guideline_example.yaml'
-  a.click()
-  URL.revokeObjectURL(url)
+const CSV_EXAMPLE = `concept,definition,examples
+Delirium,"Clinical diagnosis or explicit mention of delirium","Patient developed acute delirium postoperatively|Delirium noted during hospital stay|Episode consistent with delirium"
+AMS,"Altered mental status indicating change in cognition or awareness","Patient presents with AMS|Acute AMS observed overnight|Mental status altered from baseline"
+Hallucination,"Perception without external stimulus","Patient reports visual hallucinations|Experiencing auditory hallucinations|Seeing things that are not there"
+Confusion,"Impaired thinking or lack of clarity","Patient appears confused|Episodes of confusion noted|Increasing confusion over the past day"
+Agitated,"Increased restlessness, irritability, or motor activity","Patient is agitated and pacing in the room|Episodes of agitation noted overnight|Patient shows aggression toward staff"
+Inattention,"Difficulty maintaining or directing attention","Unable to focus on questions|Difficulty maintaining attention|Easily distracted during exam"
+`
+
+function downloadGuidelineExample(format: 'yaml' | 'csv' = 'yaml') {
+  if (format === 'csv') {
+    const blob = new Blob([CSV_EXAMPLE], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'annotation_guideline_example.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  } else {
+    const blob = new Blob([guidelineExampleRaw], { type: 'text/yaml' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'annotation_guideline_example.yaml'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 }
 
 async function handleUpload(file: File): Promise<boolean> {
-  const ext = '.' + file.name.split('.').pop()?.toLowerCase()
-  if (ext !== '.yaml' && ext !== '.yml') {
-    guidelineStore.error = 'Please select a .yaml or .yml file'
-    return false
-  }
-  try {
-    await guidelineStore.parseYamlFile(file)
-  } catch {
-    // error already set in store
+  const ext = ('.' + file.name.split('.').pop()).toLowerCase()
+  if (ext === '.yaml' || ext === '.yml') {
+    try { await guidelineStore.parseYamlFile(file) } catch { /* error set in store */ }
+  } else if (ext === '.csv') {
+    try {
+      await guidelineStore.parseCsvFile(file)
+    } catch (e) {
+      // parseCsvFile sets error.value itself; this catches unexpected throws
+      if (!guidelineStore.error) {
+        guidelineStore.error = `Unexpected error: ${e instanceof Error ? e.message : String(e)}`
+      }
+    }
+  } else {
+    guidelineStore.error = 'Please upload a .yaml, .yml, or .csv file'
   }
   return false
 }

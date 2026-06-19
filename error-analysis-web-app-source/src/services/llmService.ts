@@ -215,12 +215,77 @@ You are an expert in clinical information extraction. Your task is to perform er
 
 ${guidelineSection ? guidelineSection + '\n\n' : ''}${taxonomySection}
 
+## Direction-Based Candidate Narrowing
+
+The error direction (FP or FN) is provided in the input. Use it to pre-filter candidate error classes BEFORE selecting one.
+
+If FP (the model extracted something it should NOT have — over-extraction):
+  Strongly consider: Negation, Possible_and_Probable_Language, Hypothetical_Language,
+  Differential_Diagnosis, Absence_of_Context, History, Section,
+  Family_Member, Family_History, Other_Subject,
+  Medical_Evaluation, Medical_Instruction, Medical_Risk, Patient_Education,
+  Homonyms, Medical_Grading, Certainty, Medical_Question, Overextraction, Distortion
+
+If FN (the model MISSED something it should have extracted — under-extraction):
+  Strongly consider: Implied_Inference, Synonym, Morphological_Error,
+  Spelling_Error, Abbreviation_Error, Typographical_Error, Sentence_Boundaries,
+  Incomplete_Extraction, Dictionary_Error
+
+Note on Orthographic errors: these can go BOTH directions.
+  - FN: the model misses a concept because the text contains a misspelling or non-standard abbreviation
+  - FP: the model matches a misspelled non-concept token against a known keyword trigger
+
+## Confusable Class Decision Rules
+
+### Negation vs. Medical_Evaluation vs. Differential_Diagnosis
+All three involve "no confirmed finding," but the PRIMARY framing decides:
+- Negation: a negation modifier directly cancels the concept.
+  Trigger words: no, not, without, never, denies, denied, rules out, ruled out,
+  does not meet criteria, absent, negative [as NLP result term].
+  Example: "Patient denies falls" → Negation (not Absence_of_Context).
+- Medical_Evaluation: the sentence primarily describes a clinical assessment ACT.
+  Even if the result is negated ("screening was negative"), when the main framing
+  is evaluation/screening/assessment, prefer Medical_Evaluation.
+  Example: "Screening for food insecurity was negative" → Medical_Evaluation.
+- Differential_Diagnosis: the concept appears in a list of conditions being
+  actively considered, not yet confirmed or excluded.
+  Example: "Differential includes delirium vs. dementia" → Differential_Diagnosis.
+When explicit negation AND evaluation context co-occur, ask: is the sentence
+  primarily about the assessment act, or about denying the concept? If the negation
+  is the most salient element (e.g., "does not meet criteria for delirium"),
+  choose Negation.
+
+### Hypothetical_Language vs. Possible_and_Probable_Language vs. Medical_Risk
+- Hypothetical_Language: conditional or counterfactual framing.
+  Trigger words: if, when [conditional], should [conditional], were to, would,
+  in the event of, had the patient.
+  Example: "If the patient attempts to ambulate... risk of a future fall" → Hypothetical_Language.
+- Possible_and_Probable_Language: epistemic uncertainty about whether an event
+  occurred or a condition exists.
+  Trigger words: possible, possibly, probable, probably, likely, may have, might,
+  cannot rule out, could represent, suspected, uncertain whether.
+  Example: "It is possible that the patient may have had an unwitnessed fall" → Possible_and_Probable_Language.
+- Medical_Risk: states risk level without conditional or epistemic framing.
+  Trigger words: high/low/moderate risk, risk for, risk of [no if/may qualifier].
+  Example: "Patient is at high risk for falls" → Medical_Risk.
+When conditional framing ("if") and risk language co-occur, prefer Hypothetical_Language.
+
+### Implied_Inference vs. Partially_Correct
+- Implied_Inference: the gold concept has NO direct textual representation —
+  it must be inferred entirely from behavioral or situational description.
+  Example: "found on the floor" → Fall (zero lexical overlap with target concept).
+- Partially_Correct: the text DOES express part of the target concept, but the
+  extraction is incomplete or imprecise relative to the gold standard.
+  Example: "confused and restless" → gold=Delirium (confusion is a component of
+  Delirium; the extraction is a partial but real representation of the concept).
+
 ## Instructions
 
-1. Carefully read the input sentence, NLP prediction, and the type of error (fp: false positive or fn: false negative).
-2. Use the annotation guideline above to understand what the NLP model was extracting.
-3. Assign the most specific error class from the taxonomy above. The error class MUST be a specific class name from the taxonomy (e.g., Negation, Implied_Inference). NEVER output "FP", "FN", "False Positive", "False Negative", or any error-direction term as the Error class.
-4. Be detailed and verbose in your reasoning.
+1. Identify the error direction (FP or FN) and use the candidate list above to narrow your search space.
+2. Apply the confusable class decision rules above before finalising your choice.
+3. Use the annotation guideline above to understand what the NLP model was configured to extract.
+4. Assign the most specific error class from the taxonomy. The error class MUST be a specific class name (e.g., Negation, Implied_Inference). NEVER output "FP", "FN", "False Positive", "False Negative", or any error-direction term as the Error class.
+5. Be detailed and verbose in your reasoning.
 
 ## Input Format
 
@@ -230,7 +295,68 @@ Sentence[TAB]NLP prediction[TAB]type of error
 
 Final Answer:
 Error class: <specific error class from taxonomy — never FP or FN>
-Reasoning: <detailed explanation>`
+Reasoning: <detailed explanation>
+
+## Few-Shot Examples
+
+### FN examples — model missed a concept it should have extracted
+
+Input: He landed flat on the floor after losing his balance.	Fall	fn
+Final Answer:
+Error class: Implied_Inference
+Reasoning: The word "fall" does not appear. However, landing flat on the floor after losing balance directly implies a fall event. The model failed to infer the target concept from its physical description and consequence. This is a false negative driven by Implied_Inference — the concept is present but expressed indirectly rather than named explicitly.
+
+Input: Patient was speaking to people who were not in the room.	Hallucination	fn
+Final Answer:
+Error class: Implied_Inference
+Reasoning: The term "hallucination" is absent, but speaking to non-existent people is a canonical clinical description of a visual or auditory hallucination. The model did not capture this concept because its trigger vocabulary requires the explicit term. The concept is fully supported by the text through clinical implication.
+
+Input: She kept asking where she was, even after being told multiple times.	Disoriented	fn
+Final Answer:
+Error class: Implied_Inference
+Reasoning: "Disoriented" does not appear, but repeatedly asking where one is despite being told is a behavioral manifestation of disorientation to place. The model missed this because the concept is communicated through behavior rather than a named clinical term.
+
+Input: Patient was combative and uncooperative with nursing staff overnight.	Agitated	fn
+Final Answer:
+Error class: Synonym
+Reasoning: "Combative" is a clinical synonym for agitation commonly used in nursing notes, but it is not in the model's keyword list. The model failed to extract the concept because it does not recognize this synonym variant, producing a false negative.
+
+Input: Patient appeared obtunded and difficult to arouse.	Confusion	fn
+Final Answer:
+Error class: Synonym
+Reasoning: "Obtunded" describes a state of reduced alertness overlapping clinically with altered mental status and confusion, but the model's lexicon does not include it. This is a synonym false negative — the concept is present under a different clinical term the model was not trained to recognize.
+
+Input: Pt. c/o feeling foggy and not herself since last noc.	AMS	fn
+Final Answer:
+Error class: Abbreviation_Error
+Reasoning: "Pt." (patient), "c/o" (complains of), and "noc" (night) are standard clinical abbreviations. The model failed to parse the sentence correctly due to unresolved abbreviations, causing a false negative for altered mental status.
+
+Input: Patient did not seem confused; however, she was clearly not herself.	Confusion	fn
+Final Answer:
+Error class: Negation
+Reasoning: This is an atypical FN for Negation. The first clause negates confusion, but the second clause ("not herself") is an implicit positive indicator the model should have captured. The model's negation logic applied scope too broadly, suppressing the positive extraction from the second clause. The net result is a missed extraction.
+
+### FP examples — model extracted something it should NOT have
+
+Input: No evidence of delirium on today's assessment.	Delirium	fp
+Final Answer:
+Error class: Negation
+Reasoning: The phrase "No evidence of" is an explicit negation modifier. The model extracted Delirium without recognising this negation, producing a false positive. The correct interpretation is that delirium was assessed and ruled out.
+
+Input: Patient was screened for delirium using the CAM instrument.	Delirium	fp
+Final Answer:
+Error class: Medical_Evaluation
+Reasoning: The sentence describes a screening or evaluation event, not a confirmed clinical finding. Extracting Delirium here is a false positive — the concept is mentioned only in the context of assessment, not as a positive result.
+
+Input: Fall asleep; patient denies any recent falls.	Fall	fp
+Final Answer:
+Error class: Homonyms
+Reasoning: "Fall asleep" uses "fall" as a verb with a completely different meaning from a physical fall event. The model matched the keyword without resolving the homonym, producing a false positive.
+
+Input: Possible delirium vs. dementia exacerbation — will monitor.	Delirium	fp
+Final Answer:
+Error class: Possible_and_Probable_Language
+Reasoning: The word "possible" indicates epistemic uncertainty — the clinician has not confirmed a diagnosis. The model ignored this hedge and extracted Delirium as a confirmed finding, which is incorrect.`
 }
 
 // ---------------------------------------------------------------------------

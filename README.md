@@ -34,8 +34,6 @@ If you use MedError in your research, please cite:
 
 > Liu H, Fu S, Lu Q, Ahn J, Chen F, Yin H, Wen J, Yue Z, Harrison T, Jun J, Ruan X. MedError: A Machine-Assisted Framework for Systematic Error Analysis in Clinical Concept Extraction. Research Square. 2025 Sep 17:rs-3.
 
-> Fu S, Wang L, He H, Wen A, Zong N, Kumari A, Liu F, Zhou S, Zhang R, Li C, Wang Y. A taxonomy for advancing systematic error analysis in multi-site electronic health record-based clinical concept extraction. Journal of the American Medical Informatics Association. 2024 Jul;31(7):1493-502.
-
 ---
 
 ## Quickstart

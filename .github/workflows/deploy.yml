@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "error-analysis-web-app-source/index.html"
+      - "index.html"
   workflow_dispatch: # Allow manual triggering
 
 permissions:
@@ -31,7 +31,7 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Prepare artifact directory
-        run: mkdir -p _site && cp error-analysis-web-app-source/index.html _site/
+        run: mkdir -p _site && cp index.html _site/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

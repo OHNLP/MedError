@@ -38,11 +38,23 @@ If you use MedError in your research, please cite:
 
 ## Quickstart
 
-### Option A — No install (recommended)
+### Option A — Azure OpenAI (no install)
 
-Download [`index.html`](https://github.com/OHNLP/MedError/releases/tag/v2.1.0) from this repo and open it directly in a browser. No server or build step required — the entire app is bundled into a single file.
+Download [`index.html`](https://github.com/OHNLP/MedError/releases/tag/v2.1.0) and open it directly in a browser, or use the [live demo](https://ohnlp.org/MedError/). No server or build step required. Configure your Azure OpenAI endpoint in the **LLM Config** panel.
 
-### Option B — Run from source
+### Option B — Ollama (local LLM, no API key)
+
+Download [`index.html`](https://github.com/OHNLP/MedError/releases/tag/v2.1.0), then serve it over a local HTTP server — do not open it by double-clicking, as browsers block localhost requests from `file://` pages:
+
+```sh
+cd /path/to/MedError
+python3 -m http.server 8080
+# open http://localhost:8080 in your browser
+```
+
+See [LLM Configuration → Ollama](#option-b--ollama-local-no-api-key-required) for full setup instructions.
+
+### Option C — Run from source
 
 Requires Node.js ≥ 18 and pnpm ≥ 8.
 

@@ -116,7 +116,7 @@ In the **LLM Config** panel, select **Azure OpenAI** and fill in:
 
 Ollama runs models locally on your machine and exposes an OpenAI-compatible API. No account or API key is needed.
 
-> ⚠️ **Ollama requires running MedError locally.** The live demo at `https://ohnlp.org/MedError/` is served over HTTPS and cannot connect to `http://localhost` due to browser mixed-content restrictions. To use Ollama, open the standalone `index.html` file directly in your browser (see [Quickstart Option A](#option-a--no-install-recommended)).
+> ⚠️ **Ollama does not work from the live demo at `https://ohnlp.org/MedError/`.** You must serve MedError locally (see step 3 below).
 
 **1. Install Ollama**
 
@@ -132,19 +132,28 @@ ollama pull mistral         # 7B, fast on CPU
 ollama pull qwen2.5:14b     # 14B, stronger reasoning
 ```
 
-**3. Start the Ollama server with CORS enabled**
+**3. Start Ollama**
 
 ```sh
-OLLAMA_ORIGINS="*" ollama serve
+ollama serve
 ```
 
-> The `OLLAMA_ORIGINS="*"` flag is required so the browser can reach the local server. On Windows use `set OLLAMA_ORIGINS=*` before running `ollama serve`.
+Ollama runs at `http://localhost:11434`. Leave this terminal open while using the app.
 
-Ollama runs at `http://localhost:11434` by default and stays running in the background.
+**4. Serve MedError locally**
 
-**4. Configure in MedError**
+Do not open `index.html` by double-clicking — browsers block localhost requests from `file://` pages. Instead, serve it over HTTP:
 
-Open the standalone `index.html` locally (do not use the `ohnlp.org` live demo for Ollama). In the **LLM Config** panel, select **Ollama** and set:
+```sh
+cd /path/to/MedError
+python3 -m http.server 8080
+```
+
+Then open **`http://localhost:8080`** in your browser.
+
+**5. Configure in MedError**
+
+In the **LLM Config** panel, select **Ollama** and set:
 
 - **Base URL**: `http://localhost:11434` (default, no change needed)
 - **Model name**: the model you pulled (e.g., `llama3.1`, `mistral`, `qwen2.5:14b`)

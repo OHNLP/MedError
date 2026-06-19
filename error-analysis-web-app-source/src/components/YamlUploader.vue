@@ -1,31 +1,77 @@
 <template>
   <div class="yaml-uploader">
-    <a-card class="upload-card">
-      <a-spin :spinning="yamlStore.isLoading" tip="Parsing YAML file...">
-        <div v-if="yamlStore.data" class="success-content">
-          <a-result
-            status="success"
-            :title="yamlStore.fileName"
-            sub-title="YAML file successfully loaded"
-          >
-            <template #extra>
-              <a-button type="primary" @click="yamlStore.clearData()"> Upload New File </a-button>
-            </template>
-          </a-result>
+    <a-card class="upload-card" size="small">
+      <template #title>
+        <span>Error Taxonomy</span>
+        <a-tag v-if="yamlStore.data" color="blue" size="small" style="margin-left: 8px; font-size: 10px">
+          {{ activePresetLabel || yamlStore.fileName }}
+        </a-tag>
+      </template>
+
+      <a-spin :spinning="yamlStore.isLoading" tip="Parsing taxonomy...">
+
+        <!-- Loaded state -->
+        <div v-if="yamlStore.data" class="loaded-state">
+          <div class="loaded-row">
+            <check-circle-outlined class="ok-icon" />
+            <span class="file-label">{{ activePresetLabel || yamlStore.fileName }}</span>
+            <span class="count-hint">{{ categoryCount }} categories</span>
+            <a-button size="small" @click="clearAll">Change</a-button>
+          </div>
+
+          <!-- Collapsed taxonomy preview -->
+          <a-collapse v-model:activeKey="activeKeys" size="small" class="taxonomy-collapse">
+            <a-collapse-panel
+              v-for="(items, category) in yamlStore.data"
+              :key="String(category)"
+              :header="`${category} (${Object.keys(items).length})`"
+            >
+              <a-tooltip
+                v-for="[name, description] in Object.entries(items)"
+                :key="name"
+                :title="description"
+              >
+                <a-tag color="blue" class="item-tag">{{ name }}</a-tag>
+              </a-tooltip>
+            </a-collapse-panel>
+          </a-collapse>
         </div>
 
-        <div v-else class="upload-content">
+        <!-- Upload / select state -->
+        <div v-else class="select-state">
+          <!-- Pre-built presets -->
+          <div class="preset-section">
+            <div class="preset-label">Use pre-built taxonomy</div>
+            <div class="preset-buttons">
+              <a-button
+                v-for="preset in presets"
+                :key="preset.id"
+                size="small"
+                class="preset-btn"
+                @click="loadPreset(preset)"
+              >
+                <template #icon><database-outlined /></template>
+                {{ preset.label }}
+              </a-button>
+            </div>
+          </div>
+
+          <a-divider style="margin: 10px 0; font-size: 11px; color: #9ca3af">or upload custom</a-divider>
+
+          <!-- Custom upload -->
           <a-upload-dragger
             :before-upload="handleFileUpload"
             accept=".yaml,.yml"
             :show-upload-list="false"
             :multiple="false"
           >
-            <p class="ant-upload-drag-icon">
-              <inbox-outlined />
+            <p class="ant-upload-drag-icon" style="margin: 4px 0">
+              <inbox-outlined style="font-size: 24px" />
             </p>
-            <p class="ant-upload-text">Click or drag YAML file to this area to upload</p>
-            <p class="ant-upload-hint">Supported formats: .yaml, .yml</p>
+            <p class="ant-upload-text" style="font-size: 13px">Drop custom taxonomy YAML</p>
+            <p class="ant-upload-hint" style="font-size: 11px">
+              Format: <code>category: &#123; ErrorClass: description &#125;</code>
+            </p>
           </a-upload-dragger>
         </div>
       </a-spin>
@@ -38,67 +84,58 @@
       show-icon
       closable
       @close="yamlStore.clearData()"
-      class="error-alert"
+      style="margin-top: 8px"
     />
-
-    <!-- Display parsed data -->
-    <a-card
-      v-if="yamlStore.data && !yamlStore.error"
-      title="Parsed Data Preview"
-      class="data-preview"
-    >
-      <div class="data-structure">
-        <a-collapse v-model:activeKey="activeKeys" size="small">
-          <a-collapse-panel
-            v-for="(items, category) in yamlStore.data"
-            :key="category"
-            :header="`${category} (${Object.keys(items).length} items)`"
-          >
-            <a-tooltip
-              v-for="[name, description] in Object.entries(items)"
-              :key="name"
-              :title="description"
-            >
-              <a-tag color="blue" class="item-tag">
-                {{ name }}
-              </a-tag>
-            </a-tooltip>
-          </a-collapse-panel>
-        </a-collapse>
-      </div>
-    </a-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { InboxOutlined } from '@ant-design/icons-vue'
+import { ref, computed } from 'vue'
+import { InboxOutlined, CheckCircleOutlined, DatabaseOutlined } from '@ant-design/icons-vue'
 import { useYamlDataStore } from '../stores/yamlData'
+import { TAXONOMY_PRESETS } from '../data/taxonomyPresets'
+import type { TaxonomyPreset } from '../data/taxonomyPresets'
 
 const yamlStore = useYamlDataStore()
 const activeKeys = ref<string[]>([])
+const activePresetId = ref<string | null>(null)
+const presets = TAXONOMY_PRESETS
+
+const activePresetLabel = computed(() => {
+  if (!activePresetId.value) return null
+  return presets.find(p => p.id === activePresetId.value)?.label ?? null
+})
+
+const categoryCount = computed(() =>
+  yamlStore.data ? Object.keys(yamlStore.data).length : 0,
+)
+
+function loadPreset(preset: TaxonomyPreset) {
+  yamlStore.loadPreset(preset.data, `${preset.label} (built-in)`)
+  activePresetId.value = preset.id
+  activeKeys.value = Object.keys(preset.data)
+}
+
+function clearAll() {
+  yamlStore.clearData()
+  activePresetId.value = null
+  activeKeys.value = []
+}
 
 async function handleFileUpload(file: File): Promise<boolean> {
-  // Validate file type
-  const validExtensions = ['.yaml', '.yml']
-  const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase()
-
-  if (!validExtensions.includes(fileExtension)) {
+  const ext = '.' + file.name.split('.').pop()?.toLowerCase()
+  if (ext !== '.yaml' && ext !== '.yml') {
     yamlStore.error = 'Please select a valid YAML file (.yaml or .yml)'
     return false
   }
-
   try {
     await yamlStore.parseYamlFile(file)
-    // Expand all categories by default when data is loaded
-    if (yamlStore.data) {
-      activeKeys.value = Object.keys(yamlStore.data)
-    }
-  } catch (error) {
-    console.error('Error processing file:', error)
+    activePresetId.value = null
+    if (yamlStore.data) activeKeys.value = Object.keys(yamlStore.data)
+  } catch {
+    // error set in store
   }
-
-  return false // Prevent default upload behavior
+  return false
 }
 </script>
 
@@ -106,7 +143,7 @@ async function handleFileUpload(file: File): Promise<boolean> {
 .yaml-uploader {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0;
   width: 100%;
 }
 
@@ -114,61 +151,94 @@ async function handleFileUpload(file: File): Promise<boolean> {
   border-radius: 8px;
 }
 
-.upload-content {
-  padding: 16px 0;
+.loaded-state {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.success-content {
-  padding: 8px 0;
+.loaded-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-:deep(.ant-result) {
-  padding: 16px 0;
+.ok-icon {
+  color: #52c41a;
+  font-size: 14px;
+  flex-shrink: 0;
 }
 
-:deep(.ant-result-title) {
-  margin-bottom: 8px;
-  font-size: 16px;
+.file-label {
+  font-size: 12px;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-:deep(.ant-result-subtitle) {
-  margin-bottom: 16px;
+.count-hint {
+  font-size: 11px;
+  color: #9ca3af;
+  white-space: nowrap;
 }
 
-.error-alert {
-  margin-top: 16px;
-}
-
-.data-preview {
-  border-radius: 8px;
-}
-
-.data-structure {
-  margin-top: 8px;
+.taxonomy-collapse {
+  font-size: 12px;
 }
 
 .item-tag {
-  margin: 4px 4px 4px 0;
+  margin: 2px 2px 2px 0;
+  font-size: 11px;
 }
 
-:deep(.ant-upload-drag) {
-  border-radius: 8px;
+.select-state {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preset-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.preset-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.preset-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preset-btn {
+  text-align: left;
+  justify-content: flex-start;
+}
+
+code {
+  background: #f3f4f6;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 10px;
 }
 
 :deep(.ant-collapse) {
   background: #fafafa;
   border-radius: 6px;
-}
-
-:deep(.ant-collapse-item) {
-  border-bottom: 1px solid #e8e8e8;
-}
-
-:deep(.ant-collapse-item:last-child) {
-  border-bottom: none;
+  font-size: 12px;
 }
 
 :deep(.ant-collapse-content-box) {
-  padding: 12px 16px;
+  padding: 8px 12px;
 }
 </style>

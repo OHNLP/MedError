@@ -2,12 +2,25 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import YamlUploader from './components/YamlUploader.vue'
 import JsonUploader from './components/JsonUploader.vue'
+import LlmConfig from './components/LlmConfig.vue'
+import StudyConfig from './components/StudyConfig.vue'
+import MultiSiteComparison from './components/MultiSiteComparison.vue'
+import AnnotationGuidelineUploader from './components/AnnotationGuidelineUploader.vue'
+import AnnotationGuidelineView from './components/AnnotationGuidelineView.vue'
+import ErrorVisualization from './components/ErrorVisualization.vue'
+import TaxonomyView from './components/TaxonomyView.vue'
 import { useYamlDataStore } from './stores/yamlData'
+import { useJsonDataStore } from './stores/jsonData'
+import { useAnnotationGuidelineStore } from './stores/annotationGuideline'
 
 const yamlStore = useYamlDataStore()
+const jsonStore = useJsonDataStore()
+const guidelineStore = useAnnotationGuidelineStore()
 const yamlData = computed(() => yamlStore.data)
-const yamlRawContent = computed(() => yamlStore.rawContent)
-const yamlFileName = computed(() => yamlStore.fileName)
+const hasAnalyzed = computed(() =>
+  jsonStore.data?.tags.some(t => t.llm_analyzed) ?? false,
+)
+
 const activeTab = ref('analysis')
 
 watch(yamlData, async (val) => {
@@ -25,19 +38,31 @@ watch(yamlData, async (val) => {
         <div class="sider-content">
           <div class="header-section">
             <h1>MedError Interface</h1>
-            <p>Upload your YAML file to get started with error analysis</p>
+            <p>Configure study context, upload guidelines and taxonomy, then analyse predictions</p>
           </div>
-          <YamlUploader />
+          <StudyConfig />
+          <AnnotationGuidelineUploader style="margin-top: 16px" />
+          <YamlUploader style="margin-top: 16px" />
+          <LlmConfig style="margin-top: 16px" />
         </div>
       </a-layout-sider>
 
       <a-layout-content class="main-content">
         <a-tabs v-model:activeKey="activeTab" class="main-tabs">
-          <a-tab-pane key="analysis" tab="Analysis Results">
+          <a-tab-pane v-if="guidelineStore.data" key="guideline" tab="Concept Extraction Guideline">
+            <AnnotationGuidelineView />
+          </a-tab-pane>
+          <a-tab-pane v-if="yamlData" key="taxonomy" tab="Error Taxonomy">
+            <TaxonomyView />
+          </a-tab-pane>
+          <a-tab-pane key="analysis" tab="Error Analysis">
             <JsonUploader />
           </a-tab-pane>
-          <a-tab-pane v-if="yamlData" key="yaml" :tab="yamlFileName">
-            <pre class="yaml-raw-content">{{ yamlRawContent }}</pre>
+          <a-tab-pane v-if="hasAnalyzed" key="visualization" tab="Error Interpretation">
+            <ErrorVisualization />
+          </a-tab-pane>
+          <a-tab-pane v-if="jsonStore.data" key="multisite" tab="Multi-Site Comparison">
+            <MultiSiteComparison />
           </a-tab-pane>
         </a-tabs>
       </a-layout-content>

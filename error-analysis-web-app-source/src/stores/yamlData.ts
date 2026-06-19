@@ -54,6 +54,14 @@ export const useYamlDataStore = defineStore('yamlData', () => {
     error.value = ''
   }
 
+  /** Load taxonomy data directly (e.g. from a built-in preset) */
+  function loadPreset(presetData: YamlDataStructure, presetName: string) {
+    data.value = presetData
+    fileName.value = presetName
+    rawContent.value = ''
+    error.value = ''
+  }
+
   return {
     data,
     rawContent,
@@ -61,6 +69,7 @@ export const useYamlDataStore = defineStore('yamlData', () => {
     isLoading,
     error,
     parseYamlFile,
+    loadPreset,
     clearData,
   }
 })

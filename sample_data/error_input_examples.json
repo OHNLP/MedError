@@ -1,0 +1,291 @@
+{
+  "_comment": "MedError training/education dataset. 26 realistic examples covering FP and FN errors across multiple clinical domains, model types, and error classes.",
+  "tags": [
+    {
+      "uid": 1001,
+      "sentence": "No evidence of delirium during today's examination.",
+      "gold_standard": "null",
+      "original_prediction": "Delirium",
+      "model_type": "Rule-based",
+      "error_class": "FP",
+      "LLM_prediction": "Negation",
+      "LLM_reasoning": "The phrase 'No evidence of delirium' explicitly negates the presence of delirium. The rule-based model matched the keyword 'delirium' without detecting the negation prefix 'No evidence of', resulting in a false extraction.",
+      "errors": [{"category": "Contextual_Error", "type": "Negation"}]
+    },
+    {
+      "uid": 1002,
+      "sentence": "Patient denies any recent falls or near-falls at home.",
+      "gold_standard": "null",
+      "original_prediction": "Falls",
+      "model_type": "Rule-based",
+      "error_class": "FP",
+      "LLM_prediction": "Negation",
+      "LLM_reasoning": "The verb 'denies' is a patient-reported negation marker preceding 'falls'. The rule-based model matched the keyword 'falls' without detecting the negation, leading to a false positive.",
+      "errors": [{"category": "Contextual_Error", "type": "Negation"}]
+    },
+    {
+      "uid": 1003,
+      "sentence": "Screening for food insecurity was negative.",
+      "gold_standard": "null",
+      "original_prediction": "Food_Insecurity",
+      "model_type": "Rule-based",
+      "error_class": "FP",
+      "LLM_prediction": "Medical_Evaluation",
+      "LLM_reasoning": "The sentence documents the outcome of a food insecurity screening with a negative result ('was negative'). This is a medical evaluation context with an exclusion outcome — no food insecurity was found. The rule-based model triggered on 'food insecurity' without interpreting the screening result.",
+      "errors": [{"category": "Contextual_Error", "type": "Medical_Evaluation"}]
+    },
+    {
+      "uid": 1004,
+      "sentence": "History of recurrent falls prior to this admission; last fall was approximately 3 months ago.",
+      "gold_standard": "null",
+      "original_prediction": "Falls",
+      "model_type": "BERT",
+      "error_class": "FP",
+      "LLM_prediction": "History",
+      "LLM_reasoning": "The sentence explicitly frames falls as historical events: 'prior to this admission' and '3 months ago'. There is no current fall during this encounter. The BERT model identified falls-related content but did not resolve the temporal context indicating this is a past history, not an active event.",
+      "errors": [{"category": "Contextual_Error", "type": "History"}]
+    },
+    {
+      "uid": 1005,
+      "sentence": "Her mother has a long history of confusion and memory loss consistent with dementia.",
+      "gold_standard": "null",
+      "original_prediction": "Confusion",
+      "model_type": "Rule-based",
+      "error_class": "FP",
+      "LLM_prediction": "Subject",
+      "LLM_reasoning": "The subject of 'confusion' in this sentence is the patient's mother ('Her mother'), not the patient. The rule-based model extracted 'confusion' without performing subject-entity disambiguation, incorrectly attributing the symptom to the index patient.",
+      "errors": [{"category": "Contextual_Error", "type": "Subject"}]
+    },
+    {
+      "uid": 1006,
+      "sentence": "If the patient attempts to ambulate independently without supervision, there is a high risk of a future fall.",
+      "gold_standard": "null",
+      "original_prediction": "Falls",
+      "model_type": "Rule-based",
+      "error_class": "FP",
+      "LLM_prediction": "Hypothetical_Language",
+      "LLM_reasoning": "The fall described here is a conditional hypothetical expressed by 'If the patient attempts...' and 'a high risk of a future fall.' No actual fall has occurred. The conditional clause and future modifier clearly signal a hypothetical scenario. The model extracted 'fall' as an actual event.",
+      "errors": [{"category": "Contextual_Error", "type": "Hypothetical_Language"}]
+    },
+    {
+      "uid": 1007,
+      "sentence": "CAM assessment performed: patient is alert, oriented to person and place, and does not meet criteria for delirium.",
+      "gold_standard": "null",
+      "original_prediction": "Delirium",
+      "model_type": "Rule-based",
+      "error_class": "FP",
+      "LLM_prediction": "Medical_Evaluation",
+      "LLM_reasoning": "This sentence describes the outcome of a formal CAM delirium assessment with an explicitly negative result: 'does not meet criteria for delirium.' This is a medical evaluation context with an exclusion finding. The model triggered on the keyword 'delirium' without interpreting the assessment result.",
+      "errors": [{"category": "Contextual_Error", "type": "Medical_Evaluation"}]
+    },
+    {
+      "uid": 1008,
+      "sentence": "Fall precautions were initiated per protocol; bed alarm activated and non-skid socks applied.",
+      "gold_standard": "null",
+      "original_prediction": "Falls",
+      "model_type": "BERT",
+      "error_class": "FP",
+      "LLM_prediction": "Medical_Instruction",
+      "LLM_reasoning": "'Fall precautions were initiated' describes a clinical safety intervention, not documentation of a fall event that occurred. The BERT model conflated fall-preventive clinical language with actual fall occurrence, producing a false positive.",
+      "errors": [{"category": "Contextual_Error", "type": "Medical_Instruction"}]
+    },
+    {
+      "uid": 1009,
+      "sentence": "Patient and family were educated about delirium prevention strategies including hydration, early mobilization, and sleep hygiene.",
+      "gold_standard": "null",
+      "original_prediction": "Delirium",
+      "model_type": "Rule-based",
+      "error_class": "FP",
+      "LLM_prediction": "Patient_Education",
+      "LLM_reasoning": "The sentence documents patient and family education about delirium prevention, not an active diagnosis or occurrence of delirium. 'Delirium prevention strategies' is an educational context. The rule-based model matched 'delirium' without recognizing the patient education framing.",
+      "errors": [{"category": "Contextual_Error", "type": "Patient_Education"}]
+    },
+    {
+      "uid": 1010,
+      "sentence": "Differential diagnosis includes delirium superimposed on dementia versus acute dementia exacerbation.",
+      "gold_standard": "null",
+      "original_prediction": "Delirium",
+      "model_type": "BERT",
+      "error_class": "FP",
+      "LLM_prediction": "Differential_Diagnosis",
+      "LLM_reasoning": "Delirium appears as one of several differential diagnoses under consideration ('differential diagnosis includes'), not as a confirmed clinical finding. The BERT model extracted 'delirium' without recognizing that 'differential diagnosis includes' signals diagnostic uncertainty rather than a confirmed condition.",
+      "errors": [{"category": "Contextual_Error", "type": "Differential_Diagnosis"}]
+    },
+    {
+      "uid": 1011,
+      "sentence": "It is possible that the patient may have had an unwitnessed fall at home prior to presentation, though this has not been confirmed.",
+      "gold_standard": "null",
+      "original_prediction": "Falls",
+      "model_type": "BERT",
+      "error_class": "FP",
+      "LLM_prediction": "Possible_and_Probable_Language",
+      "LLM_reasoning": "Multiple uncertainty markers qualify the fall: 'It is possible that', 'may have had', 'unwitnessed', and 'has not been confirmed'. The fall is speculative and unconfirmed. The BERT model extracted falls without adequately weighting these certainty modifiers.",
+      "errors": [{"category": "Contextual_Error", "type": "Possible_and_Probable_Language"}]
+    },
+    {
+      "uid": 1012,
+      "sentence": "Assessed for delirium by the geriatric consult team; patient was oriented x3 and no acute changes in cognition were noted.",
+      "gold_standard": "null",
+      "original_prediction": "Delirium",
+      "model_type": "BERT",
+      "error_class": "FP",
+      "LLM_prediction": "Medical_Evaluation",
+      "LLM_reasoning": "The sentence describes a formal assessment for delirium with a negative result: the patient was 'oriented x3' and had 'no acute changes in cognition.' The 'Assessed for delirium' framing combined with a normal cognitive finding represents a medical evaluation exclusion. The BERT model triggered on 'delirium' without interpreting the result.",
+      "errors": [{"category": "Contextual_Error", "type": "Medical_Evaluation"}]
+    },
+    {
+      "uid": 1013,
+      "sentence": "At around 2 AM the patient was found wandering the hallway, speaking to people who were not there, and was unable to recognize nursing staff.",
+      "gold_standard": "Hallucination",
+      "original_prediction": "null",
+      "model_type": "BERT",
+      "error_class": "FN",
+      "LLM_prediction": "Implied_Inference",
+      "LLM_reasoning": "'Speaking to people who were not there' is a classic description of visual or auditory hallucination in clinical NLP, but the word 'hallucination' does not appear. The BERT model required the explicit keyword and failed to infer the clinical concept from this behavioral description. Combined with nighttime wandering, this presentation strongly implies delirium-related hallucination.",
+      "errors": [{"category": "Linguistic_Error", "type": "Implied_Inference"}]
+    },
+    {
+      "uid": 1014,
+      "sentence": "The patient was befuddled and disoriented upon morning assessment, unable to state the date or current location.",
+      "gold_standard": "Confusion",
+      "original_prediction": "null",
+      "model_type": "Rule-based",
+      "error_class": "FN",
+      "LLM_prediction": "Synonym",
+      "LLM_reasoning": "'Befuddled' is a synonym for confused/confused mental status. The rule-based model's term dictionary did not include 'befuddled' as a match for the Confusion concept class. Similarly, 'disoriented' combined with inability to state date and location provides strong evidence of confusion, but was not captured by the keyword lexicon.",
+      "errors": [{"category": "Linguistic_Error", "type": "Synonym"}]
+    },
+    {
+      "uid": 1015,
+      "sentence": "The patient stumbled while walking to the bathroom and went down to the floor, requiring nursing staff assistance to get up.",
+      "gold_standard": "Falls",
+      "original_prediction": "null",
+      "model_type": "Rule-based",
+      "error_class": "FN",
+      "LLM_prediction": "Implied_Inference",
+      "LLM_reasoning": "'Went down to the floor' describes a fall event through paraphrase. The sequence 'stumbled → went down to the floor → requiring assistance to get up' unambiguously describes a fall. The rule-based model matched only the literal keyword 'fall' or 'fell' and did not capture this paraphrastic description.",
+      "errors": [{"category": "Linguistic_Error", "type": "Implied_Inference"}]
+    },
+    {
+      "uid": 1016,
+      "sentence": "Night nursing documented that patient was lethargick and difficult to arouse for vitals at 3 AM.",
+      "gold_standard": "Lethargy",
+      "original_prediction": "null",
+      "model_type": "Rule-based",
+      "error_class": "FN",
+      "LLM_prediction": "Orthographic_Error",
+      "LLM_reasoning": "'Lethargick' is a misspelling of 'lethargic'. The rule-based model's dictionary lookup failed because the token does not match the correctly spelled form 'lethargic' or root 'lethargy'. Orthographic errors in EHR free text are common and represent a significant vulnerability for rule-based lexicon systems.",
+      "errors": [{"category": "Linguistic_Error", "type": "Orthographic_Error"}]
+    },
+    {
+      "uid": 1017,
+      "sentence": "Patient was found on the floor of his room by the night aide; circumstances of the event are unclear.",
+      "gold_standard": "Falls",
+      "original_prediction": "null",
+      "model_type": "BERT",
+      "error_class": "FN",
+      "LLM_prediction": "Implied_Inference",
+      "LLM_reasoning": "Being 'found on the floor' by staff is a strong clinical indicator of an unwitnessed fall, even though the word 'fall' does not appear. This phrasing pattern ('found on the floor') is a common circumlocution in nursing documentation for fall events. The BERT model did not learn to associate this phrase pattern with fall occurrence.",
+      "errors": [{"category": "Linguistic_Error", "type": "Implied_Inference"}]
+    },
+    {
+      "uid": 1018,
+      "sentence": "Patient reports that she sometimes skips meals because she cannot afford groceries after paying rent, and her refrigerator has been mostly empty this month.",
+      "gold_standard": "Food_Insecurity",
+      "original_prediction": "null",
+      "model_type": "BERT",
+      "error_class": "FN",
+      "LLM_prediction": "Implied_Inference",
+      "LLM_reasoning": "Food insecurity is described through specific behavioral and economic indicators: skipping meals due to cost, inability to afford groceries, and an empty refrigerator. The term 'food insecurity' does not appear. The BERT model failed to synthesize these social and economic cues into the food insecurity concept, likely due to insufficient SDoH training data.",
+      "errors": [{"category": "Linguistic_Error", "type": "Implied_Inference"}]
+    },
+    {
+      "uid": 1019,
+      "sentence": "She is no longer able to manage her activities of daily living independently and now requires hands-on assistance for bathing, dressing, and transfers.",
+      "gold_standard": "Functional_Decline",
+      "original_prediction": "null",
+      "model_type": "Rule-based",
+      "error_class": "FN",
+      "LLM_prediction": "Synonym",
+      "LLM_reasoning": "The sentence explicitly names 'activities of daily living' with a loss of independence ('no longer able to manage independently'), which is the definitional description of functional decline. The rule-based model's keyword list did not include 'activities of daily living' combined with independence modifiers as a trigger for the Functional_Decline concept.",
+      "errors": [{"category": "Linguistic_Error", "type": "Synonym"}]
+    },
+    {
+      "uid": 1020,
+      "sentence": "Pateint was agitated and combattive during the morning nursing assessment, requiring two-person assist for safety.",
+      "gold_standard": "Agitation",
+      "original_prediction": "null",
+      "model_type": "Rule-based",
+      "error_class": "FN",
+      "LLM_prediction": "Orthographic_Error",
+      "LLM_reasoning": "'Combattive' is a misspelling of 'combative', which is a clinical synonym for agitation. The rule-based model's lexicon lookup failed on this misspelled token. Note also that 'Pateint' (for 'Patient') suggests this note was typed quickly, and EHR autocorrect may not have been applied — a common source of noise in real clinical text.",
+      "errors": [{"category": "Linguistic_Error", "type": "Orthographic_Error"}]
+    },
+    {
+      "uid": 1021,
+      "sentence": "Patient has been increasingly confused and restless over the past 24 hours, with notable worsening in the evening hours.",
+      "gold_standard": "Delirium",
+      "original_prediction": "null",
+      "model_type": "BERT",
+      "error_class": "FN",
+      "LLM_prediction": "Implied_Inference",
+      "LLM_reasoning": "This sentence describes acute-onset confusion, psychomotor restlessness, and diurnal fluctuation with evening worsening (sundowning) — three core features of delirium per CAM criteria. The explicit term 'delirium' is absent. The BERT model extracted 'confused' and 'restless' as individual symptom terms but did not synthesize them into the composite delirium concept.",
+      "errors": [{"category": "Linguistic_Error", "type": "Implied_Inference"}]
+    },
+    {
+      "uid": 1022,
+      "sentence": "Transportation remains a barrier to follow-up care; patient relies on a neighbor for rides but neighbor is not always available.",
+      "gold_standard": "Transportation_Barrier",
+      "original_prediction": "null",
+      "model_type": "BERT",
+      "error_class": "FN",
+      "LLM_prediction": "Implied_Inference",
+      "LLM_reasoning": "Transportation barrier is described through contextual inference: reliance on a single informal source ('relies on a neighbor') combined with stated unreliability ('not always available') constitutes a transportation barrier. The phrase 'transportation barrier' appears only in the framing clause and the model did not capture the clinical relevance of the unreliable transport described in the second clause.",
+      "errors": [{"category": "Linguistic_Error", "type": "Implied_Inference"}]
+    },
+    {
+      "uid": 1023,
+      "sentence": "The patient tripped over the bedside commode while attempting to get up at night and struck her head on the floor.",
+      "gold_standard": "Falls",
+      "original_prediction": "null",
+      "model_type": "Rule-based",
+      "error_class": "FN",
+      "LLM_prediction": "Morphological_Error",
+      "LLM_reasoning": "'Tripped' (past tense of 'trip') is a fall-equivalent event not in the model's lexicon. The rule-based keyword list covered 'fall', 'fell', and 'fallen' but not 'tripped' or 'struck the floor'. Both verbs describe the mechanics of a fall event. This morphological gap caused the fall event to be missed.",
+      "errors": [{"category": "Linguistic_Error", "type": "Morphological_Error"}]
+    },
+    {
+      "uid": 1024,
+      "sentence": "Cognitive assessment revealed mild impairment; patient was unable to recall 2 of 3 words at 5 minutes and could not draw an analog clock correctly.",
+      "gold_standard": "Cognitive_Impairment",
+      "original_prediction": "null",
+      "model_type": "BERT",
+      "error_class": "FN",
+      "LLM_prediction": "Implied_Inference",
+      "LLM_reasoning": "Cognitive impairment is indicated by quantitative performance results: failure on the 3-word recall (a standard MoCA/MMSE item) and clock-drawing test error. These are specific, well-known cognitive test findings that indicate memory and visuospatial impairment. The BERT model did not map these test performance descriptions to the Cognitive_Impairment concept, likely due to under-representation of quantitative test result descriptions in training.",
+      "errors": [{"category": "Linguistic_Error", "type": "Implied_Inference"}]
+    },
+    {
+      "uid": 1025,
+      "sentence": "Patient was confused and agitated throughout the morning; nursing also noted inattention and fluctuating alertness during medication administration.",
+      "gold_standard": "Delirium",
+      "original_prediction": "null",
+      "model_type": "BERT",
+      "error_class": "FN",
+      "LLM_prediction": "Implied_Inference",
+      "LLM_reasoning": "This sentence contains all four CAM criteria for delirium: acute-onset confusion, agitation (disorganized thinking/behavior), inattention, and fluctuating mental status ('fluctuating alertness'). The composite diagnosis 'delirium' is not stated, but each CAM criterion is explicitly documented. The BERT model identified the individual symptoms but failed to synthesize them into a delirium classification.",
+      "errors": [{"category": "Linguistic_Error", "type": "Implied_Inference"}]
+    },
+    {
+      "uid": 1026,
+      "sentence": "The patient states she lives alone in subsidized housing and relies on the food bank twice a month because her SNAP benefits run out mid-month.",
+      "gold_standard": "Food_Insecurity",
+      "original_prediction": "null",
+      "model_type": "Rule-based",
+      "error_class": "FN",
+      "LLM_prediction": "Absence_of_Context",
+      "LLM_reasoning": "The sentence explicitly documents food insecurity through reliance on a food bank and SNAP benefit insufficiency ('benefits run out mid-month'). The rule-based model likely had 'food insecurity' and 'hunger' as keywords but not 'food bank', 'SNAP', or 'benefits run out' as triggers. This reflects a gap in the rule set's coverage of specific social program indicators.",
+      "errors": [{"category": "Contextual_Error", "type": "Absence_of_Context"}]
+    }
+  ]
+}

@@ -32,7 +32,7 @@ The error taxonomy covers six dimensions — Annotation, Contextual, Linguistic,
 
 If you use MedError in your research, please cite:
 
-> Liu H, Fu S, Lu Q, Ahn J, Chen F, Yin H, Wen J, Yue Z, Harrison T, Jun J, Ruan X. MedError: A Machine-Assisted Framework for Systematic Error Analysis in Clinical Concept Extraction. Research Square. 2025 Sep 17:rs-3.
+> Fu, S., Lu, Q., Ahn, J. et al. A machine-assisted framework for systematic error analysis in clinical concept extraction. Nat Commun (2026). https://doi.org/10.1038/s41467-026-77067-1
 
 ---
 
